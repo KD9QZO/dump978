@@ -29,42 +29,46 @@
 #include "uat_decode.h"
 #include "reader.h"
 
+
+
 #define NON_ICAO_ADDRESS 0x1000000U
 
+
+/*! \brief Data structure describing an aircraft */
 struct aircraft {
-    struct aircraft *next;
-    uint32_t address;
+	struct aircraft *next;
+	uint32_t address;					/*!< The \e address of the aircraft */
 
-    uint32_t messages;
-    time_t last_seen;
-    time_t last_seen_pos;
+	uint32_t messages;					/*!< The number of \e messages that have been received from the aircraft */
+	time_t last_seen;
+	time_t last_seen_pos;
 
-    int position_valid : 1;
-    int altitude_valid : 1;
-    int track_valid : 1;
-    int speed_valid : 1;
-    int vert_rate_valid : 1;
+	int position_valid:1;
+	int altitude_valid:1;
+	int track_valid:1;
+	int speed_valid:1;
+	int vert_rate_valid:1;
 
-    airground_state_t airground_state;
-    char callsign[9];
-    char squawk[9];
+	airground_state_t airground_state;	/*!< Whether the aircraft is on the ground, or in the air */
+	char callsign[9];					/*!< The \e callsign of the aircraft */
+	char squawk[9];						/*!< The transponder \e squawk code of the aircraft */
 
-    // if position_valid:
-    double lat;
-    double lon;
+	// if position_valid:
+	double lat;							/*!< The \e latitude (location) of the aircraft */
+	double lon;							/*!< The \e longitude (location) of the aircraft */
 
-    // if altitude_valid:
-    int32_t altitude; // in feet
-    
-    // if track_valid:
-    uint16_t track;
+	// if altitude_valid:
+	int32_t altitude;					/*!< The \e altitude of the aircraft, in \b feet */
 
-    // if speed_valid:
-    uint16_t speed; // in kts
+	// if track_valid:
+	uint16_t track;
 
-    // if vert_rate_valid:
-    int16_t vert_rate; // in ft/min
-};        
+	// if speed_valid:
+	uint16_t speed;						/*!< The \e speed of the aircraft, in \b knots */
+
+	// if vert_rate_valid:
+	int16_t vert_rate;					/*!< The \e ascent or \e descent rate of the aircraft, in \b feet/minute */
+};
 
 static struct aircraft *aircraft_list;
 static time_t NOW;

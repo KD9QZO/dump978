@@ -7,8 +7,11 @@
 # for realtime continuous generation of maps.
 #
 
-import sys, math
-import cairo, colorsys
+import sys
+import math
+import cairo
+import colorsys
+
 
 intensities = {
     0: colorsys.hls_to_rgb(240.0/360.0, 0.15, 1.0),
@@ -21,9 +24,12 @@ intensities = {
     7: colorsys.hls_to_rgb(0.0/360.0, 0.7, 1.0)
 }
 
+
+
 def color_for(intensity):    
     r,g,b = intensities[intensity]
     return cairo.SolidPattern(r,g,b,1.0)
+
 
 # mercator projection (yeah, it's not great, but it's simple)
 # lat, lon are in _arcminutes_
@@ -40,7 +46,9 @@ def project(lat,lon):
 
     return (x,y)
 
+
 images = {}
+
 
 while True:
     line = sys.stdin.readline()
@@ -59,14 +67,14 @@ while True:
     key = maptype + '/' + maptime
     if not key in images:
         images[key] = {
-            'type' : maptype,
-            'time' : maptime,
-            'lat_min' : latN - latSize,
-            'lat_max' : latN,
-            'lon_min' : lonW,
-            'lon_max' : lonW + lonSize,
-            'blocks' : {
-                sf : [ (latN, lonW, latSize, lonSize, blockdata) ]
+            'type': maptype,
+            'time': maptime,
+            'lat_min': latN - latSize,
+            'lat_max': latN,
+            'lon_min': lonW,
+            'lon_max': lonW + lonSize,
+            'blocks': {
+                sf: [ (latN, lonW, latSize, lonSize, blockdata) ]
             }
         }
     else:
@@ -95,14 +103,14 @@ for image in images.values():
     pixels_per_degree = 80.0 / scale
 
     # project, find scale
-    x0,y0 = project(lat_min,lon_min)
-    x1,y1 = project(lat_min,lon_max)
-    x2,y2 = project(lat_max,lon_min)
-    x3,y3 = project(lat_max,lon_max)
-    xmin = min(x0,x1,x2,x3)
-    xmax = max(x0,x1,x2,x3)
-    ymin = min(y0,y1,y2,y3)
-    ymax = max(y0,y1,y2,y3)
+    x0, y0 = project(lat_min, lon_min)
+    x1, y1 = project(lat_min, lon_max)
+    x2, y2 = project(lat_max, lon_min)
+    x3, y3 = project(lat_max, lon_max)
+    xmin = min(x0, x1, x2, x3)
+    xmax = max(x0, x1, x2, x3)
+    ymin = min(y0, y1, y2, y3)
+    ymax = max(y0, y1, y2, y3)
 
     xsize = int(pixels_per_degree * 180.0 * (xmax - xmin) / math.pi)
     ysize = int(pixels_per_degree * 180.0 * (ymax - ymin) / math.pi)
@@ -123,7 +131,7 @@ for image in images.values():
         cc.set_source(cairo.SolidPattern(r,g,b,1.0))
 
     cc.paint()
-    
+
     for sf in sorted(image['blocks'].keys(), reverse=True): # lowest res first    
         for latN, lonW, latSize, lonSize, data in image['blocks'][sf]:
             for y in xrange(4):
@@ -142,5 +150,3 @@ for image in images.values():
 
     surface.write_to_png('nexrad_%s_%s.png' % (image['type'], image['time']))
 
-
-    

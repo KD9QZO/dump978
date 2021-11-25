@@ -24,19 +24,20 @@
 #include "uat.h"
 #include "reader.h"
 
+
+
 struct dump978_reader {
-    int fd;
-    char buf[4096];
-    uint8_t frame[UPLINK_FRAME_DATA_BYTES]; // max uplink frame size
-    int used;
+	int fd;
+	char buf[4096];
+	uint8_t frame[UPLINK_FRAME_DATA_BYTES]; // max uplink frame size
+	int used;
 };
 
 static int process_input(struct dump978_reader *reader, frame_handler_t handler, void *handler_data);
 static int process_line(struct dump978_reader *reader, frame_handler_t handler, void *handler_data, char *p, char *end);
 static int hexbyte(char *buf);
 
-struct dump978_reader *dump978_reader_new(int fd, int nonblock)
-{
+struct dump978_reader *dump978_reader_new(int fd, int nonblock) {
     struct dump978_reader *reader = calloc(1, sizeof(*reader));
     if (!reader)
         return NULL;
@@ -171,29 +172,29 @@ static int process_line(struct dump978_reader *reader, frame_handler_t handler, 
     return 0; // ran off the end without seeing semicolon
 }    
 
-static int hexbyte(char *buf)
-{
-    int i;
-    char c;
+static int hexbyte(char *buf) {
+	int i;
+	char c;
 
-    c = buf[0];
-    if (c >= '0' && c <= '9')
-        i = (c - '0');
-    else if (c >= 'a' && c <= 'f')
-        i = (c - 'a' + 10);
-    else if (c >= 'A' && c <= 'F')
-        i = (c - 'A' + 10);
-    else
-        return -1;
+	c = buf[0];
+	if (c >= '0' && c <= '9')
+		i = (c - '0');
+	else if (c >= 'a' && c <= 'f')
+		i = (c - 'a' + 10);
+	else if (c >= 'A' && c <= 'F')
+		i = (c - 'A' + 10);
+	else
+		return -1;
 
-    i <<= 4;
-    c = buf[1];
-    if (c >= '0' && c <= '9')
-        return i | (c - '0');
-    else if (c >= 'a' && c <= 'f')
-        return i | (c - 'a' + 10);
-    else if (c >= 'A' && c <= 'F')
-        return i | (c - 'A' + 10);
-    else
-        return -1;
+	i <<= 4;
+	c = buf[1];
+	if (c >= '0' && c <= '9')
+		return i | (c - '0');
+	else if (c >= 'a' && c <= 'f')
+		return i | (c - 'a' + 10);
+	else if (c >= 'A' && c <= 'F')
+		return i | (c - 'A' + 10);
+	else
+		return -1;
 }
+

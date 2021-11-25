@@ -21,8 +21,9 @@
 #include "uat_decode.h"
 #include "reader.h"
 
-void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra)
-{
+
+
+void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra) {
     if (type == UAT_DOWNLINK) {
         struct uat_adsb_mdb mdb;
         uat_decode_adsb_mdb(frame, &mdb);
@@ -37,8 +38,7 @@ void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra)
     fflush(stdout);
 }        
 
-int main(int argc, char **argv)
-{
+int main(int argc, char *argv[]) {
     struct dump978_reader *reader;
     int framecount;
 

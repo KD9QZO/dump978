@@ -31,8 +31,7 @@ static void checksum_and_send(uint8_t *frame, int len, uint32_t parity);
 // gcc will do a pretty good job of crunching it down
 // to just a couple of operations. Even more so if value
 // is also constant.
-static inline void setbits(uint8_t *frame, unsigned firstbit, unsigned lastbit, uint32_t value)
-{
+static inline void setbits(uint8_t *frame, unsigned firstbit, unsigned lastbit, uint32_t value) {
     // convert to 0-based:
     unsigned lb = lastbit-1;
     

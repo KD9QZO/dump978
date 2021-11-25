@@ -15,14 +15,20 @@
 // You should have received a copy of the GNU General Public License  
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef DUMP978_READER_H
-#define DUMP978_READER_H
+#ifndef DUMP978_READER_H_
+#define DUMP978_READER_H_
+
 
 #include <stdint.h>
 
+
+
 struct dump978_reader;
 
-typedef enum { UAT_UPLINK, UAT_DOWNLINK } frame_type_t;
+typedef enum {
+	UAT_UPLINK,
+	UAT_DOWNLINK
+} frame_type_t;
 
 // Function pointer type for a handler called by dump978_read_frames().
 // It is called with arguments:
@@ -53,11 +59,8 @@ void dump978_reader_free(struct dump978_reader *reader);
 // Returns <0 on error with errno set.
 // If the underlying FD is nonblocking and no frames are
 // available, returns <0 with errno = EAGAIN/EINTR/EWOULDBLOCK.
-int dump978_read_frames(struct dump978_reader *reader,
-                        frame_handler_t handler,
-                        void *handler_data);
-
-#endif
+int dump978_read_frames(struct dump978_reader *reader, frame_handler_t handler, void *handler_data);
 
 
-                         
+#endif	/* !DUMP978_READER_H_ */
+

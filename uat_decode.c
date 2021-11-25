@@ -22,37 +22,34 @@
 #include "uat.h"
 #include "uat_decode.h"
 
-static void uat_decode_hdr(uint8_t *frame, struct uat_adsb_mdb *mdb)
-{
-    mdb->mdb_type = (frame[0] >> 3) & 0x1f;
-    mdb->address_qualifier = (address_qualifier_t) (frame[0] & 0x07);
-    mdb->address = (frame[1] << 16) | (frame[2] << 8) | frame[3];
+
+
+static void uat_decode_hdr(uint8_t *frame, struct uat_adsb_mdb *mdb) {
+	mdb->mdb_type = ((frame[0] >> 3) & 0x1F);
+	mdb->address_qualifier = (address_qualifier_t)(frame[0] & 0x07);
+	mdb->address = ((frame[1] << 16) | (frame[2] << 8) | frame[3]);
 }
 
 static const char *address_qualifier_names[8] = {
-    "ICAO address via ADS-B",
-    "reserved (national use)",
-    "ICAO address via TIS-B",
-    "TIS-B track file address",
-    "Vehicle address",
-    "Fixed ADS-B Beacon Address",
-    "reserved (6)",
-    "reserved (7)"
-};    
+	"ICAO address via ADS-B",
+	"reserved (national use)",
+	"ICAO address via TIS-B",
+	"TIS-B track file address",
+	"Vehicle address",
+	"Fixed ADS-B Beacon Address",
+	"reserved (6)",
+	"reserved (7)"
+};
 
-static void uat_display_hdr(const struct uat_adsb_mdb *mdb, FILE *to)
-{
-    fprintf(to,
-            "HDR:\n"
-            " MDB Type:          %d\n"
-            " Address:           %06X (%s)\n",
-            mdb->mdb_type, 
-            mdb->address,
-            address_qualifier_names[mdb->address_qualifier]);
+static void uat_display_hdr(const struct uat_adsb_mdb *mdb, FILE *to) {
+	fprintf(to, "HDR:\n MDB Type:          %d\n Address:           %06X (%s)\n", mdb->mdb_type, mdb->address, address_qualifier_names[mdb->address_qualifier]);
 }
 
 static double dimensions_widths[16] = {
-    11.5, 23, 28.5, 34, 33, 38, 39.5, 45, 45, 52, 59.5, 67, 72.5, 80, 80, 90
+	11.5, 23.0, 28.5, 34.0,
+	33.0, 38.0, 39.5, 45.0,
+	45.0, 52.0, 59.5, 67.0,
+	72.5, 80.0, 80.0, 90.0
 };
 
 static void uat_decode_sv(uint8_t *frame, struct uat_adsb_mdb *mdb)
@@ -794,156 +791,126 @@ static const char *get_fisb_product_format(uint16_t product_id)
     }
 }
 
-static void uat_display_fisb_frame(const struct fisb_apdu *apdu, FILE *to)
-{
-    fprintf(to, 
-            "FIS-B:\n"
-            " Flags:             %s%s%s%s\n"
-            " Product ID:        %u (%s) - %s\n",
-            apdu->a_flag ? "A" : "",
-            apdu->g_flag ? "G" : "",
-            apdu->p_flag ? "P" : "",
-            apdu->s_flag ? "S" : "",
-            apdu->product_id,
-            get_fisb_product_name(apdu->product_id),
-            get_fisb_product_format(apdu->product_id));
+static void uat_display_fisb_frame(const struct fisb_apdu *apdu, FILE *to) {
+	fprintf(to, "FIS-B:\n Flags:             %s%s%s%s\n Product ID:        %u (%s) - %s\n", apdu->a_flag ? "A" : "", apdu->g_flag ? "G" : "", apdu->p_flag ? "P" : "", apdu->s_flag ? "S" : "", apdu->product_id, get_fisb_product_name(apdu->product_id), get_fisb_product_format(apdu->product_id));
 
-    fprintf(to,
-            " Product time:      ");
-    if (apdu->monthday_valid)
-        fprintf(to, "%u/%u ", apdu->month, apdu->day);
-    fprintf(to, "%02u:%02u", apdu->hours, apdu->minutes);
-    if (apdu->seconds_valid)
-        fprintf(to, ":%02u", apdu->seconds);
-    fprintf(to, "\n");
+	fprintf(to, " Product time:      ");
+	if (apdu->monthday_valid) {
+		fprintf(to, "%u/%u ", apdu->month, apdu->day);
+	}
+	fprintf(to, "%02u:%02u", apdu->hours, apdu->minutes);
+	if (apdu->seconds_valid) {
+		fprintf(to, ":%02u", apdu->seconds);
+	}
+	fprintf(to, "\n");
 
-    switch (apdu->product_id) {
-    case 413:
-        {
-            // Generic text, DLAC
-            const char *text = decode_dlac(apdu->data, apdu->length);
-            const char *report = text;
-            
-            while (report) {
-                char report_buf[1024];
-                const char *next_report;
-                char *p, *r;
-                
-                next_report = strchr(report, '\x1e'); // RS
-                if (!next_report)
-                    next_report = strchr(report, '\x03'); // ETX
-                if (next_report) {
-                    memcpy(report_buf, report, next_report - report);
-                    report_buf[next_report - report] = 0;
-                    report = next_report + 1;
-                } else {
-                    strcpy(report_buf, report);
-                    report = NULL;
-                }
-                
-                if (!report_buf[0])
-                    continue;
+	switch (apdu->product_id) {
+		case 413: {
+			// Generic text, DLAC
+			const char *text = decode_dlac(apdu->data, apdu->length);
+			const char *report = text;
 
-                r = report_buf;
-                p = strchr(r, ' ');
-                if (p) {
-                    *p = 0;
-                    fprintf(to,
-                            " Report type:       %s\n",
-                            r);
-                    r = p+1;
-                }
-                
-                p = strchr(r, ' ');
-                if (p) {
-                    *p = 0;
-                    fprintf(to,
-                            " Report location:   %s\n",
-                            r);
-                    r = p+1;
-                }
-                
-                p = strchr(r, ' ');
-                if (p) {
-                    *p = 0;
-                    fprintf(to,
-                            " Report time:       %s\n",
-                            r);
-                    r = p+1;
-                }
-                
-                fprintf(to,
-                        " Text:\n%s\n",
-                        r);
-            }
-        }            
-        break;
-    default:
-        display_generic_data(apdu->data, apdu->length, to);
-        break;
-    }                
-}            
+			while (report) {
+				char report_buf[1024];
+				const char *next_report;
+				char *p;
+				char *r;
+
+				next_report = strchr(report, '\x1e'); // RS
+				if (!next_report) {
+					next_report = strchr(report, '\x03'); // ETX
+				}
+
+				if (next_report) {
+					memcpy(report_buf, report, next_report - report);
+					report_buf[next_report - report] = 0;
+					report = next_report + 1;
+				} else {
+					strcpy(report_buf, report);
+					report = NULL;
+				}
+
+				if (!report_buf[0]) {
+					continue;
+				}
+
+				r = report_buf;
+				p = strchr(r, ' ');
+				if (p) {
+					*p = 0;
+					fprintf(to, " Report type:       %s\n", r);
+					r = p + 1;
+				}
+
+				p = strchr(r, ' ');
+				if (p) {
+					*p = 0;
+					fprintf(to, " Report location:   %s\n", r);
+					r = p + 1;
+				}
+
+				p = strchr(r, ' ');
+				if (p) {
+					*p = 0;
+					fprintf(to, " Report time:       %s\n", r);
+					r = p + 1;
+				}
+
+				fprintf(to, " Text:\n%s\n", r);
+			}
+			break;
+		}
+
+		default: {
+			display_generic_data(apdu->data, apdu->length, to);
+			break;
+		}
+	}
+}
 
 static const char *info_frame_type_names[16] = {
-    "FIS-B APDU",
-    "Reserved for Developmental Use",
-    "Reserved for Future Use (2)",
-    "Reserved for Future Use (3)",
-    "Reserved for Future Use (4)",
-    "Reserved for Future Use (5)",
-    "Reserved for Future Use (6)",
-    "Reserved for Future Use (7)",
-    "Reserved for Future Use (8)",
-    "Reserved for Future Use (9)",
-    "Reserved for Future Use (10)",
-    "Reserved for Future Use (11)",
-    "Reserved for Future Use (12)",
-    "Reserved for Future Use (13)",
-    "Reserved for Future Use (14)",
-    "TIS-B/ADS-R Service Status"
+	"FIS-B APDU",
+	"Reserved for Developmental Use",
+	"Reserved for Future Use (2)",
+	"Reserved for Future Use (3)",
+	"Reserved for Future Use (4)",
+	"Reserved for Future Use (5)",
+	"Reserved for Future Use (6)",
+	"Reserved for Future Use (7)",
+	"Reserved for Future Use (8)",
+	"Reserved for Future Use (9)",
+	"Reserved for Future Use (10)",
+	"Reserved for Future Use (11)",
+	"Reserved for Future Use (12)",
+	"Reserved for Future Use (13)",
+	"Reserved for Future Use (14)",
+	"TIS-B/ADS-R Service Status"
 };
 
-static void uat_display_uplink_info_frame(const struct uat_uplink_info_frame *frame, FILE *to)
-{
-    fprintf(to,
-            "INFORMATION FRAME:\n"
-            " Length:            %u bytes\n"
-            " Type:              %u (%s)\n",
-            frame->length,
-            frame->type,
-            info_frame_type_names[frame->type]);
+static void uat_display_uplink_info_frame(const struct uat_uplink_info_frame *frame, FILE *to) {
+	fprintf(to, "INFORMATION FRAME:\n Length:            %u bytes\n Type:              %u (%s)\n", frame->length, frame->type, info_frame_type_names[frame->type]);
 
-    if (frame->length > 0) {
-        if (frame->is_fisb)
-            uat_display_fisb_frame(&frame->fisb, to);
-        else {
-            display_generic_data(frame->data, frame->length, to);
-        }
-    }
+	if (frame->length > 0) {
+		if (frame->is_fisb)
+			uat_display_fisb_frame(&frame->fisb, to);
+		else {
+			display_generic_data(frame->data, frame->length, to);
+		}
+	}
 }
 
-void uat_display_uplink_mdb(const struct uat_uplink_mdb *mdb, FILE *to)
-{
-    fprintf(to, 
-            "UPLINK:\n");
+void uat_display_uplink_mdb(const struct uat_uplink_mdb *mdb, FILE *to) {
+	fprintf(to, "UPLINK:\n");
 
-    fprintf(to,
-            " Site Latitude:     %+.4f%s\n"
-            " Site Longitude:    %+.4f%s\n",
-            mdb->lat, mdb->position_valid ? "" : " (possibly invalid)",
-            mdb->lon, mdb->position_valid ? "" : " (possibly invalid)");
-            
-    fprintf(to,
-            " UTC coupled:       %s\n"
-            " Slot ID:           %u\n"
-            " TIS-B Site ID:     %u\n",
-            mdb->utc_coupled ? "yes" : "no",
-            mdb->slot_id,
-            mdb->tisb_site_id);
-    
-    if (mdb->app_data_valid) {
-        unsigned i;
-        for (i = 0; i < mdb->num_info_frames; ++i)
-            uat_display_uplink_info_frame(&mdb->info_frames[i], to);
-    }
+	fprintf(to, " Site Latitude:     %+.4f%s\n Site Longitude:    %+.4f%s\n", mdb->lat, mdb->position_valid ? "" : " (possibly invalid)", mdb->lon, mdb->position_valid ? "" : " (possibly invalid)");
+
+	fprintf(to, " UTC coupled:       %s\n Slot ID:           %u\n TIS-B Site ID:     %u\n", mdb->utc_coupled ? "yes" : "no", mdb->slot_id, mdb->tisb_site_id);
+
+	if (mdb->app_data_valid) {
+		unsigned i;
+		for (i = 0; i < mdb->num_info_frames; ++i) {
+			uat_display_uplink_info_frame(&mdb->info_frames[i], to);
+		}
+	}
 }
+
