@@ -5,10 +5,11 @@
 
 DEFINES += -DOUTPUT_HEX_UPPERCASE
 
-CFLAGS  += -O2 -g -Wall -Werror -Ifec
-LDFLAGS += -Wl,
+CFLAGS  += -pipe -std=gnu11 -O2 -g -Wall -Werror -Ifec
+LDFLAGS += -Wl,-Map=dump978.map -Wl,--cref -Wl,--relax
 LIBS    := -lm
 CC      := gcc
+CXX     := g++
 
 
 all: dump978 uat2json uat2text uat2esnt extract_nexrad

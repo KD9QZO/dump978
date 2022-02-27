@@ -1,18 +1,18 @@
 //
 // Copyright 2015, Oliver Jowett <oliver@mutability.co.uk>
 //
-
-// This file is free software: you may copy, redistribute and/or modify it  
-// under the terms of the GNU General Public License as published by the
-// Free Software Foundation, either version 2 of the License, or (at your  
-// option) any later version.  
 //
-// This file is distributed in the hope that it will be useful, but  
-// WITHOUT ANY WARRANTY; without even the implied warranty of  
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU  
+// This file is free software: you may copy, redistribute and/or modify it
+// under the terms of the GNU General Public License as published by the
+// Free Software Foundation, either version 2 of the License, or (at your
+// option) any later version.
+//
+// This file is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License  
+// You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
@@ -70,22 +70,27 @@ struct aircraft {
 	int16_t vert_rate;					/*!< The \e ascent or \e descent rate of the aircraft, in \b feet/minute */
 };
 
+
 static struct aircraft *aircraft_list;
 static time_t NOW;
 static const char *json_dir;
 
-static struct aircraft *find_aircraft(uint32_t address)
-{
-    struct aircraft *a;
-    for (a = aircraft_list; a; a = a->next)
-        if (a->address == address)
-            return a;
-    return NULL;
+
+static struct aircraft *find_aircraft(uint32_t address) {
+	struct aircraft *a;
+
+	for (a = aircraft_list; a; a = a->next) {
+		if (a->address == address) {
+			return (a);
+		}
+	}
+
+	return (NULL);
 }
 
-static struct aircraft *find_or_create_aircraft(uint32_t address)
-{
+static struct aircraft *find_or_create_aircraft(uint32_t address) {
     struct aircraft *a = find_aircraft(address);
+
     if (a)
         return a;
 
@@ -99,9 +104,9 @@ static struct aircraft *find_or_create_aircraft(uint32_t address)
     return a;
 }
 
-static void expire_old_aircraft()
-{
-    struct aircraft *a, **last;    
+static void expire_old_aircraft() {
+    struct aircraft *a, **last;
+
     for (last = &aircraft_list, a = *last; a; a = *last) {
         if ((NOW - a->last_seen) > 300) {
             *last = a->next;
@@ -114,28 +119,27 @@ static void expire_old_aircraft()
 
 static uint32_t message_count;
 
-static void process_mdb(struct uat_adsb_mdb *mdb)
-{
-    struct aircraft *a;
-    uint32_t addr;
-    
-    ++message_count;
+static void process_mdb(struct uat_adsb_mdb *mdb) {
+	struct aircraft *a;
+	uint32_t addr;
 
-    switch (mdb->address_qualifier) {
-    case AQ_ADSB_ICAO:
-    case AQ_TISB_ICAO:
-        addr = mdb->address;
-        break;
+	++message_count;
 
-    default:
-        addr = mdb->address | NON_ICAO_ADDRESS;
-        break;
-    }
-   
+	switch (mdb->address_qualifier) {
+		case AQ_ADSB_ICAO:
+		case AQ_TISB_ICAO:
+			addr = mdb->address;
+			break;
+
+		default:
+			addr = (mdb->address | NON_ICAO_ADDRESS);
+			break;
+	}
+
     a = find_or_create_aircraft(addr);
     a->last_seen = NOW;
     ++a->messages;
-    
+
     // copy state into aircraft
     if (mdb->airground_state != AG_RESERVED)
         a->airground_state = mdb->airground_state;
@@ -181,8 +185,7 @@ static void process_mdb(struct uat_adsb_mdb *mdb)
     }
 }
 
-static int write_receiver_json(const char *dir)
-{
+static int write_receiver_json(const char *dir) {
     char path[PATH_MAX];
     char path_new[PATH_MAX];
     FILE *f;
@@ -197,12 +200,7 @@ static int write_receiver_json(const char *dir)
         return 0;
     }
 
-    fprintf(f,
-            "{\n"
-            "  \"version\" : \"dump978-uat2json\",\n"
-            "  \"refresh\" : 1000,\n"
-            "  \"history\" : 0\n"
-            "}\n");
+    fprintf(f, "{\n  \"version\" : \"dump978-uat2json\",\n  \"refresh\" : 1000,\n  \"history\" : 0\n}\n");
     fclose(f);
 
     if (rename(path_new, path) < 0) {
@@ -213,8 +211,7 @@ static int write_receiver_json(const char *dir)
     return 1;
 }
 
-static int write_aircraft_json(const char *dir)
-{
+static int write_aircraft_json(const char *dir) {
     char path[PATH_MAX];
     char path_new[PATH_MAX];
     FILE *f;
@@ -230,14 +227,11 @@ static int write_aircraft_json(const char *dir)
         return 0;
     }
 
-    fprintf(f,
-            "{\n"
+    fprintf(f, "{\n"
             "  \"now\" : %u,\n"
             "  \"messages\" : %u,\n"
-            "  \"aircraft\" : [\n",
-            (unsigned)NOW,
-            message_count);
-    
+            "  \"aircraft\" : [\n", (unsigned)NOW, message_count);
+
 
     for (a = aircraft_list; a; a = a->next) {
         if (a != aircraft_list)
@@ -355,11 +349,21 @@ static void read_loop()
     }
 
     dump978_reader_free(reader);
-}                    
+}
 
-int main(int argc, char **argv)
-{
+
+static void usage(char *argv0) {
+	fprintf(stderr, "USAGE: %s [directory]\n\n", argv0);
+
+	fprintf(stderr, "Reads UAT messages from stdin.\n");
+	fprintf(stderr, "Periodically writes aircraft state to [directory]/aircraft.json\n");
+	fprintf(stderr, "Additionally writes [directory]/receiver.json once, on startup.\n\n");
+}
+
+
+int main(int argc, char *argv[]) {
     if (argc < 2) {
+#if 0
         fprintf(stderr,
                 "Syntax: %s <dir>\n"
                 "\n"
@@ -367,16 +371,22 @@ int main(int argc, char **argv)
                 "Periodically writes aircraft state to <dir>/aircraft.json\n"
                 "Also writes <dir>/receiver.json once on startup\n",
                 argv[0]);
-        return 1;
+#else
+		usage(argv[0]);
+#endif
+
+        return (1);
     }
 
     json_dir = argv[1];
 
     if (!write_receiver_json(json_dir)) {
         fprintf(stderr, "Failed to write receiver.json - check permissions?\n");
+
         return 1;
     }
     read_loop();
     write_aircraft_json(json_dir);
+
     return 0;
 }

@@ -630,28 +630,27 @@ static void checksum_and_send(uint8_t *frame, int len, uint32_t parity)
     fflush(stdout);
 }
 
-static void generate_esnt(struct uat_adsb_mdb *mdb)
-{
-    maybe_send_surface_position(mdb);
-    maybe_send_air_position(mdb);
-    maybe_send_air_velocity(mdb);
-    maybe_send_callsign(mdb);
-
+static void generate_esnt(struct uat_adsb_mdb *mdb) {
+	maybe_send_surface_position(mdb);
+	maybe_send_air_position(mdb);
+	maybe_send_air_velocity(mdb);
+	maybe_send_callsign(mdb);
 }
 
 static int use_tisb = 1;
 
-static int should_send(struct uat_adsb_mdb *mdb)
-{
-    switch (mdb->address_qualifier) {
-    case AQ_ADSB_ICAO:
-        return 1; // Real UAT
-    case AQ_TISB_ICAO:
-    case AQ_TISB_OTHER:
-        return use_tisb; // Only if TIS-B is enabled
-    default:
-        return 1;
-    }
+static int should_send(struct uat_adsb_mdb *mdb) {
+	switch (mdb->address_qualifier) {
+		case AQ_ADSB_ICAO:
+			return 1; // Real UAT
+
+		case AQ_TISB_ICAO:
+		case AQ_TISB_OTHER:
+			return use_tisb; // Only if TIS-B is enabled
+
+		default:
+			return 1;
+	}
 }
 
 static void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra)
@@ -666,62 +665,59 @@ static void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra
     }
 }        
 
-void usage(int argc, char **argv)
-{
-    fprintf(stderr,
-            "usage: %s [-t]\n"
-            "\n"
-            "Reads UAT downlink messages from stdin and writes ADS-B ES/NT messages\n"
-            "(1090MHz-style) to stdout.\n"
-            "\n"
-            "  -t   Disable forwarding of TIS-B traffic\n"
-            "  -h   Show this usage message\n",
-            argv[0]);
+void usage(int argc, char **argv) {
+	fprintf(stderr,
+			"usage: %s [-t]\n"
+			"\n"
+			"Reads UAT downlink messages from stdin and writes ADS-B ES/NT messages\n"
+			"(1090MHz-style) to stdout.\n"
+			"\n"
+			"  -t   Disable forwarding of TIS-B traffic\n"
+			"  -h   Show this usage message\n",
+			argv[0]);
 }
 
-int main(int argc, char **argv)
-{
-    struct dump978_reader *reader;
-    int framecount;
-    int opt;
+int main(int argc, char **argv) {
+	struct dump978_reader *reader;
+	int framecount;
+	int opt;
 
-    while ((opt = getopt(argc, argv, "ht")) > 0) {
-        switch (opt) {
-        case 'h':
-            usage(argc, argv);
-            return 0;
+	while ((opt = getopt(argc, argv, "ht")) > 0) {
+		switch (opt) {
+			case 'h':
+				usage(argc, argv);
+				return 0;
 
-        case 't':
-            use_tisb = 0;
-            break;
+			case 't':
+				use_tisb = 0;
+				break;
 
-        default:
-            usage(argc, argv);
-            return 1;
-        }
-    }
+			default:
+				usage(argc, argv);
+				return 1;
+		}
+	}
 
-    if (optind < argc) {
-        usage(argc, argv);
-        return 1;
-    }
+	if (optind < argc) {
+		usage(argc, argv);
+		return 1;
+	}
 
-    initCrcTables();
+	initCrcTables();
 
-    reader = dump978_reader_new(0,0);
-    if (!reader) {
-        perror("dump978_reader_new");
-        return 1;
-    }
-    
-    while ((framecount = dump978_read_frames(reader, handle_frame, NULL)) > 0)
-        ;
+	reader = dump978_reader_new(0,0);
+	if (!reader) {
+		perror("dump978_reader_new");
+		return 1;
+	}
 
-    if (framecount < 0) {
-        perror("dump978_read_frames");
-        return 1;
-    }
+	while ((framecount = dump978_read_frames(reader, handle_frame, NULL)) > 0);
 
-    return 0;
+	if (framecount < 0) {
+		perror("dump978_read_frames");
+		return 1;
+	}
+
+	return 0;
 }
 

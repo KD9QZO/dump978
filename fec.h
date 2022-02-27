@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License  
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef DUMP978_FEC_H
-#define DUMP978_FEC_H
+#ifndef DUMP978_FEC_H_
+#define DUMP978_FEC_H_
 
 /* Initialize. Must be called once before correct_* */
 void init_fec(void);
@@ -41,4 +41,5 @@ int correct_adsb_frame(uint8_t *to, int *rs_errors);
  */
 int correct_uplink_frame(uint8_t *from, uint8_t *to, int *rs_errors);
 
-#endif
+#endif	/* !DUMP978_FEC_H_ */
+

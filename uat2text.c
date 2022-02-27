@@ -24,38 +24,41 @@
 
 
 void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra) {
-    if (type == UAT_DOWNLINK) {
-        struct uat_adsb_mdb mdb;
-        uat_decode_adsb_mdb(frame, &mdb);
-        uat_display_adsb_mdb(&mdb, stdout);
-    } else {
-        struct uat_uplink_mdb mdb;
-        uat_decode_uplink_mdb(frame, &mdb);
-        uat_display_uplink_mdb(&mdb, stdout);
-    }
+	if (type == UAT_DOWNLINK) {
+		struct uat_adsb_mdb mdb;
 
-    fprintf(stdout, "\n");
-    fflush(stdout);
-}        
+		uat_decode_adsb_mdb(frame, &mdb);
+		uat_display_adsb_mdb(&mdb, stdout);
+	} else {
+		struct uat_uplink_mdb mdb;
 
-int main(int argc, char *argv[]) {
-    struct dump978_reader *reader;
-    int framecount;
+		uat_decode_uplink_mdb(frame, &mdb);
+		uat_display_uplink_mdb(&mdb, stdout);
+	}
 
-    reader = dump978_reader_new(0,0);
-    if (!reader) {
-        perror("dump978_reader_new");
-        return 1;
-    }
-    
-    while ((framecount = dump978_read_frames(reader, handle_frame, NULL)) > 0)
-        ;
-
-    if (framecount < 0) {
-        perror("dump978_read_frames");
-        return 1;
-    }
-
-    return 0;
+	fprintf(stdout, "\n");
+	fflush(stdout);
 }
 
+
+int main(int argc, char *argv[]) {
+	struct dump978_reader *reader;
+	int framecount;
+
+	reader = dump978_reader_new(0, 0);
+	if (!reader) {
+		perror("dump978_reader_new");
+
+		return (1);
+	}
+
+	while ((framecount = dump978_read_frames(reader, handle_frame, NULL)) > 0);
+
+	if (framecount < 0) {
+		perror("dump978_read_frames");
+
+		return (1);
+	}
+
+	return (0);
+}

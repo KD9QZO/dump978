@@ -14,21 +14,21 @@ import colorsys
 
 
 intensities = {
-    0: colorsys.hls_to_rgb(240.0/360.0, 0.15, 1.0),
-    1: colorsys.hls_to_rgb(240.0/360.0, 0.2, 1.0),
-    2: colorsys.hls_to_rgb(200.0/360.0, 0.4, 1.0),
-    3: colorsys.hls_to_rgb(160.0/360.0, 0.4, 1.0),
-    4: colorsys.hls_to_rgb(120.0/360.0, 0.5, 1.0),
-    5: colorsys.hls_to_rgb(80.0/360.0, 0.5, 1.0),
-    6: colorsys.hls_to_rgb(40.0/360.0, 0.6, 1.0),
-    7: colorsys.hls_to_rgb(0.0/360.0, 0.7, 1.0)
+    0: colorsys.hls_to_rgb(240.0 / 360.0, 0.15, 1.0),
+    1: colorsys.hls_to_rgb(240.0 / 360.0, 0.2, 1.0),
+    2: colorsys.hls_to_rgb(200.0 / 360.0, 0.4, 1.0),
+    3: colorsys.hls_to_rgb(160.0 / 360.0, 0.4, 1.0),
+    4: colorsys.hls_to_rgb(120.0 / 360.0, 0.5, 1.0),
+    5: colorsys.hls_to_rgb(80.0 / 360.0, 0.5, 1.0),
+    6: colorsys.hls_to_rgb(40.0 / 360.0, 0.6, 1.0),
+    7: colorsys.hls_to_rgb(0.0 / 360.0, 0.7, 1.0)
 }
 
 
 
-def color_for(intensity):    
-    r,g,b = intensities[intensity]
-    return cairo.SolidPattern(r,g,b,1.0)
+def color_for(intensity):
+    r, g, b = intensities[intensity]
+    return cairo.SolidPattern(r, g, b, 1.0)
 
 
 # mercator projection (yeah, it's not great, but it's simple)
@@ -42,9 +42,9 @@ def project(lat,lon):
     lon = math.pi * lon / 180.0
 
     x = lon
-    y = math.log(math.tan(math.pi/4.0 + lat/2.0))
+    y = math.log(math.tan(math.pi / 4.0 + lat / 2.0))
 
-    return (x,y)
+    return (x, y)
 
 
 images = {}
@@ -52,10 +52,12 @@ images = {}
 
 while True:
     line = sys.stdin.readline()
-    if not line: break
+    if not line:
+        break
 
     words = line.strip().split(' ')
-    if words[0] != 'NEXRAD': continue
+    if words[0] != 'NEXRAD':
+        continue
 
     nexrad, maptype, maptime, sf, latN, lonW, latSize, lonSize, blockdata = words
     sf = int(sf)
@@ -74,7 +76,9 @@ while True:
             'lon_min': lonW,
             'lon_max': lonW + lonSize,
             'blocks': {
-                sf: [ (latN, lonW, latSize, lonSize, blockdata) ]
+                sf: [
+                    (latN, lonW, latSize, lonSize, blockdata)
+                ]
             }
         }
     else:
@@ -85,9 +89,11 @@ while True:
         image['lon_max'] = max(image['lon_max'], lonW + lonSize)
 
         if not sf in image['blocks']:
-            image['blocks'][sf] = [ (latN, lonW, latSize, lonSize, blockdata) ]
+            image['blocks'][sf] = [
+                (latN, lonW, latSize, lonSize, blockdata)
+            ]
         else:
-            image['blocks'][sf].append( (latN, lonW, latSize, lonSize, blockdata) )
+            image['blocks'][sf].append((latN, lonW, latSize, lonSize, blockdata))
 
 for image in images.values():
     lat_min = image['lat_min']
@@ -97,9 +103,12 @@ for image in images.values():
 
     # find most detailed scale; scale our image accordingly
     sf = min(image['blocks'].keys())
-    if sf == 1: scale = 5.0
-    elif sf == 2: scale = 9.0
-    else: scale = 1.0
+    if sf == 1:
+        scale = 5.0
+    elif sf == 2:
+        scale = 9.0
+    else:
+        scale = 1.0
     pixels_per_degree = 80.0 / scale
 
     # project, find scale
@@ -127,8 +136,8 @@ for image in images.values():
     if image['type'] == 'CONUS':
         cc.set_source(color_for(0))
     else:
-        r,g,b = colorsys.hls_to_rgb(270.0/360.0, 0.10, 1.0)
-        cc.set_source(cairo.SolidPattern(r,g,b,1.0))
+        r,g,b = colorsys.hls_to_rgb(270.0 / 360.0, 0.10, 1.0)
+        cc.set_source(cairo.SolidPattern(r, g, b, 1.0))
 
     cc.paint()
 
@@ -136,14 +145,14 @@ for image in images.values():
         for latN, lonW, latSize, lonSize, data in image['blocks'][sf]:
             for y in xrange(4):
                 for x in xrange(32):
-                    intensity = int(data[x+y*32])
+                    intensity = int(data[x + y * 32])
                     lat = latN - y * latSize / 4.0
                     lon = lonW + x * lonSize / 32.0
-                
-                    cc.move_to(*project(lat,lon))
-                    cc.line_to(*project(lat-latSize/4.0,lon))
-                    cc.line_to(*project(lat-latSize/4.0,lon+lonSize/32.0))
-                    cc.line_to(*project(lat,lon+lonSize/32.0))
+
+                    cc.move_to(*project(lat, lon))
+                    cc.line_to(*project(lat - latSize / 4.0, lon))
+                    cc.line_to(*project(lat - latSize / 4.0, lon + lonSize / 32.0))
+                    cc.line_to(*project(lat, lon + lonSize / 32.0))
                     cc.close_path()
                     cc.set_source(color_for(intensity))
                     cc.fill()
