@@ -75,66 +75,101 @@ $ zcat sample-data.txt.gz | grep "^-" | ./uat2text
 ```
 
 
-## Map generation via uat2json ##
+## Map generation via `uat2json` ##
 
 `uat2json` writes `aircraft.json` files in the format expected by [my fork of dump1090][1]'s map html/javascript.
 
+
+### Setup of a Live Map Feed ###
+
 To set up a live map feed:
 
-1) Get a copy of [this dump1090 repository][1].
-We're going to reuse its mapping html/javascript:
+1) Get a copy of [this dump1090 repository][1]; we're going to reuse its mapping **html/javascript** resources:
 
 ```
-$ git clone https://github.com/mutability/dump1090 dump1090-copy
+$ git clone https://github.com/mutability/dump1090.git dump1090-dump978-web
 ```
 
-2) Put the html/javascript somewhere your webserver can reach, such as within the `/var/www` or `/srv/http` path:
+2) Create directories and set permissions for the **html/javascript** somewhere where your webserver can reach, such as
+   within the `/var/www` or `/srv/http` path:
 
 ```
-$ mkdir /var/www/dump978map
-$ cp -a dump1090-copy/public_html/* /var/www/dump978map/
+$ (sudo) mkdir /path/to/dump978map
+$ (sudo) chgrp -R www-data /path/to/dump978map
+$ (sudo) chmod -R 2775 /path/to/dump978map
 ```
 
-3) Create an empty `data` subdirectory
+3) Copy the **html/javascript** resources to the newly created directories:
 
 ```
-$ mkdir /var/www/dump978map/data
+$ cp -ra /path/to/dump1090-dump978-web/public_html/* /path/to/dump978map/
+```
+or
+```
+$ rsync -aAXv /path/to/dump1090-dump978-web/public_html/ /path/to/dump978map
 ```
 
-4) Feed `uat2json` from `dump978`:
+4) Create an empty `data` subdirectory
 
 ```
-$ rtl_sdr -f 978000000 -s 2083334 -g 48 - | \
-  ./dump978 | \
-  ./uat2json /var/www/dump978map/data
+$ (sudo) mkdir /path/to/dump978map/data
 ```
 
-5) Go look at [http://localhost/dump978map/][2]
+5) Ensure permissions are correctly configured for `/path/to/dump978map`:
+
+```
+$ (sudo) chgrp -R www-data /path/to/dump978map
+$ (sudo) chmod -R 2775 /path/to/dump978map
+```
+
+6) Feed `uat2json` from `dump978`:
+
+```
+$ rtl_sdr -f 978000000 -s 2083334 -g 48 - | ./dump978 | ./uat2json /var/www/dump978map/data
+```
+
+7) Go look at [http://localhost/dump978map/][2]
 
 
-## uat2esnt: convert UAT ADS-B messages to Mode S ADS-B messages.
+## `uat2esnt`: convert UAT ADS-B messages to Mode S ADS-B messages. ##
 
 **Warning: _This one is particularly experimental._**
 
-`uat2esnt` accepts 978MHz UAT downlink messages on `stdin` and generates 1090MHz Extended Squitter messages on `stdout`.
+`uat2esnt` _accepts_ **978MHz UAT downlink messages** on `stdin` and _generates_ **1090MHz Extended Squitter messages**
+on `stdout`.
 
-The generated messages mostly use **DF18** with **CF=6**, which is for rebroadcasts of ADS-B messages (ADS-R).
+The generated messages mostly use `DF18` with `CF=6`, which is for _rebroadcasts_ of ADS-B messages _(ADS-R)_.
 
 The output format is the **"AVR"** text format; this can be fed to `dump1090` on **port 30001** by default. Other ADS-B
-tools may accept it too -- e.g. VRS seems to accept most of it _(though it ignores **DF18** **CF=5** messages, which are
-generated for non-ICAO-address callsign/squawk information)_.
+tools may accept it too -- e.g. [VRS][3] seems to accept _most_ of it _(though it ignores `DF18` `CF=5` messages, which
+are generated for non-ICAO-address callsign/squawk information)_.
 
-You'll want a pipeline like this:
+
+### Example Pipelines ###
+
+
+#### Listening for incoming connections ####
+
+To _listen_ for incoming connections, allowing other _aviation-related_ software to connect to the output of `dump978`
+and `uat2esnt`, use the following command line:
 
 ```
-$ rtl_sdr -f 978000000 -s 2083334 -g 48 - | \
-  ./dump978 | \
-  ./uat2esnt | \
-  nc -q1 localhost 30001
+$ rtl_sdr -f 978000000 -s 2083334 -g 48 - | ./dump978 | ./uat2esnt | nc -q1 localhost 30001
 ```
 
+
+#### Pushing messages to an external server ####
+
+To _push_ messages to an external server, such as [VRS][3] or [readsb][4] _(running on the same host, or perhaps a host
+on the local network, or even the internet)_ that's listening for incoming messages on specific port _(for example, port
+**33001** on IP address **10.4.10.35**)_, we would use the following command line:
+
+```
+$ rtl_sdr -f 978000000 -s 2083334 -g 48 - | ./dump978 | ./uat2esnt | nc -q1 10.4.10.35 33001
+```
 
 
 [1]:	<https://github.com/mutability/dump1090>
 [2]:	<http://localhost/dump978map/>
+[3]:	<https://www.virtualradarserver.co.uk>
 

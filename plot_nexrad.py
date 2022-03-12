@@ -2,9 +2,9 @@
 
 #
 # This takes the output of extract_nexrad and generates images.
-# It isn't very smart at the moment and won't draw anything
-# until all input has been consumed, so it's not very useful
-# for realtime continuous generation of maps.
+#
+# It isn't very smart at the moment and won't draw anything until all input has been consumed, so it's not very useful
+# for the real-time continuous generation of maps.
 #
 
 import sys
@@ -136,12 +136,12 @@ for image in images.values():
     if image['type'] == 'CONUS':
         cc.set_source(color_for(0))
     else:
-        r,g,b = colorsys.hls_to_rgb(270.0 / 360.0, 0.10, 1.0)
+        r, g, b = colorsys.hls_to_rgb(270.0 / 360.0, 0.10, 1.0)
         cc.set_source(cairo.SolidPattern(r, g, b, 1.0))
 
     cc.paint()
 
-    for sf in sorted(image['blocks'].keys(), reverse=True): # lowest res first    
+    for sf in sorted(image['blocks'].keys(), reverse=True): # lowest res first
         for latN, lonW, latSize, lonSize, data in image['blocks'][sf]:
             for y in xrange(4):
                 for x in xrange(32):

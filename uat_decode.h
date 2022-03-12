@@ -2,17 +2,17 @@
 //
 // Copyright 2015, Oliver Jowett <oliver@mutability.co.uk>
 //
-// This file is free software: you may copy, redistribute and/or modify it  
+// This file is free software: you may copy, redistribute and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation, either version 2 of the License, or (at your  
-// option) any later version.  
+// Free Software Foundation, either version 2 of the License, or (at your
+// option) any later version.
 //
-// This file is distributed in the hope that it will be useful, but  
-// WITHOUT ANY WARRANTY; without even the implied warranty of  
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU  
+// This file is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License  
+// You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef UAT_DECODE_H_
@@ -76,15 +76,15 @@ typedef enum {
 
 struct uat_adsb_mdb {
 	// presence bits
-	int has_sv : 1;
-	int has_ms : 1;
-	int has_auxsv : 1;
+	int has_sv:1;
+	int has_ms:1;
+	int has_auxsv:1;
 
-	int position_valid : 1;
-	int ns_vel_valid : 1;
-	int ew_vel_valid : 1;
-	int speed_valid : 1;
-	int dimensions_valid : 1;
+	int position_valid:1;
+	int ns_vel_valid:1;
+	int ew_vel_valid:1;
+	int speed_valid:1;
+	int dimensions_valid:1;
 
 	//
 	// HDR
@@ -102,33 +102,33 @@ struct uat_adsb_mdb {
 	double lon;
 
 	altitude_type_t altitude_type;
-	int32_t altitude; // in feet
+	int32_t altitude;			// in feet
 
 	uint8_t nic;
 
 	airground_state_t airground_state;
 
 	// if ns_vel_valid:
-	int16_t ns_vel; // in kts
+	int16_t ns_vel;				// in kts
 	// if ew_vel_valid:
-	int16_t ew_vel; // in kts
+	int16_t ew_vel;				// in kts
 
 	track_type_t track_type;
 	uint16_t track;
 
 	// if speed_valid:
-	uint16_t speed; // in kts
+	uint16_t speed;				// in kts
 
 	altitude_type_t vert_rate_source;
-	int16_t vert_rate; // in ft/min
+	int16_t vert_rate;			// in ft/min
 
 	// if lengthwidth_valid:
-	double length; // in meters (just to be different)
-	double width;  // in meters (just to be different)
-	int position_offset : 1;  // true if Position Offset Applied
+	double length;				// in meters (just to be different)
+	double width;				// in meters (just to be different)
+	int position_offset:1;		// true if Position Offset Applied
 
-	int utc_coupled : 1;      // true if UTC Coupled flag is set (ADS-B)
-	uint8_t tisb_site_id;     // TIS-B site ID, or zero in ADS-B messages
+	int utc_coupled:1;			// true if UTC Coupled flag is set (ADS-B)
+	uint8_t tisb_site_id;		// TIS-B site ID, or zero in ADS-B messages
 
 	//
 	// MS
@@ -146,21 +146,23 @@ struct uat_adsb_mdb {
 	uint8_t nic_baro;
 
 	// capabilities:
-	int has_cdti : 1;
-	int has_acas : 1;    
+	int has_cdti:1;
+	int has_acas:1;
 	// operational modes:
-	int acas_ra_active : 1;
-	int ident_active : 1;
-	int atc_services : 1;
+	int acas_ra_active:1;
+	int ident_active:1;
+	int atc_services:1;
 
 	heading_type_t heading_type;
 
 	//
 	// AUXSV
-
+	//
 	altitude_type_t sec_altitude_type;
 	int32_t sec_altitude; // in feet
 };
+
+
 
 //
 // Decode/display prototypes
@@ -170,7 +172,7 @@ void uat_decode_adsb_mdb(uint8_t *frame, struct uat_adsb_mdb *mdb);
 void uat_display_adsb_mdb(const struct uat_adsb_mdb *mdb, FILE *to);
 
 //
-// UPLINK 
+// UPLINK
 //
 
 // assume 6 byte frames: 2 header bytes, 4 byte payload
@@ -186,11 +188,11 @@ struct fisb_apdu {
 	int seconds_valid:1;
 
 	uint16_t product_id;
-	uint8_t month;   // if monthday_valid
-	uint8_t day;     // if monthday_valid
+	uint8_t month;			// if monthday_valid
+	uint8_t day;			// if monthday_valid
 	uint8_t hours;
 	uint8_t minutes;
-	uint8_t seconds; // if seconds_valid
+	uint8_t seconds;		// if seconds_valid
 
 	uint16_t length;
 	uint8_t *data;
@@ -225,9 +227,11 @@ struct uat_uplink_mdb {
 	struct uat_uplink_info_frame info_frames[UPLINK_MAX_INFO_FRAMES];
 };
 
+
+
+
 void uat_decode_uplink_mdb(uint8_t *frame, struct uat_uplink_mdb *mdb);
 void uat_display_uplink_mdb(const struct uat_uplink_mdb *mdb, FILE *to);
 
 
 #endif	/* !UAT_DECODE_H_ */
-

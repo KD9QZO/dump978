@@ -2,17 +2,17 @@
 // Copyright 2015, Oliver Jowett <oliver@mutability.co.uk>
 //
 
-// This file is free software: you may copy, redistribute and/or modify it  
+// This file is free software: you may copy, redistribute and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation, either version 2 of the License, or (at your  
-// option) any later version.  
+// Free Software Foundation, either version 2 of the License, or (at your
+// option) any later version.
 //
-// This file is distributed in the hope that it will be useful, but  
-// WITHOUT ANY WARRANTY; without even the implied warranty of  
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU  
+// This file is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License  
+// You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
@@ -33,8 +33,8 @@ static void *rs_adsb_long;
 
 
 
-#define UPLINK_POLY 0x187
-#define ADSB_POLY 0x187
+#define UPLINK_POLY	(0x0187)
+#define ADSB_POLY	(0x0187)
 
 
 
@@ -45,27 +45,32 @@ void init_fec(void) {
 }
 
 int correct_adsb_frame(uint8_t *to, int *rs_errors) {
-	// Try decoding as a Long UAT.
-	// We rely on decode_rs_char not modifying the data if there were uncorrectable errors.
+	/*
+	 * Try decoding as a Long UAT.
+	 * We rely on decode_rs_char() not modifying the data if there were uncorrectable errors.
+	 */
 	int n_corrected = decode_rs_char(rs_adsb_long, to, NULL, 0);
 
 	if ((n_corrected >= 0) && (n_corrected <= 7) && ((to[0] >> 3) != 0)) {
-		// Valid long frame.
+		/* Valid long frame. */
 		*rs_errors = n_corrected;
-		return 2;
+
+		return (2);
 	}
 
-	// Retry as Basic UAT
+	/* Retry as Basic UAT */
 	n_corrected = decode_rs_char(rs_adsb_short, to, NULL, 0);
 	if ((n_corrected >= 0) && (n_corrected <= 6) && ((to[0] >> 3) == 0)) {
-		// Valid short frame
+		/* Valid short frame */
 		*rs_errors = n_corrected;
-		return 1;
+
+		return (1);
 	}
 
-	// Failed.
+	/* Failed. */
 	*rs_errors = 9999;
-	return -1;
+
+	return (-1);
 }
 
 int correct_uplink_frame(uint8_t *from, uint8_t *to, int *rs_errors) {
@@ -81,19 +86,20 @@ int correct_uplink_frame(uint8_t *from, uint8_t *to, int *rs_errors) {
 			blockdata[i] = from[i * UPLINK_FRAME_BLOCKS + block];
 		}
 
-		// error-correct in place
+		/* error-correct in place */
 		n_corrected = decode_rs_char(rs_uplink, blockdata, NULL, 0);
 		if (n_corrected < 0 || n_corrected > 10) {
-			// Failed
+			/* Failed */
 			*rs_errors = 9999;
-			return -1;
+
+			return (-1);
 		}
 
 		total_corrected += n_corrected;
-		// next block (if there is one) will overwrite the ECC bytes.
+		/* next block (if there is one) will overwrite the ECC bytes. */
 	}
 
 	*rs_errors = total_corrected;
-	return 1;
-}
 
+	return (1);
+}

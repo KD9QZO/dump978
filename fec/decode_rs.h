@@ -60,13 +60,17 @@
 #endif
 
 #if !defined(NULL)
-#define NULL ((void *)0)
+#define NULL ((void*)0)
 #endif
 
+
 #undef MIN
-#define	MIN(a,b)	((a) < (b) ? (a) : (b))
+#define	MIN(a, b)	((a) < (b) ? (a) : (b))
+
 #undef A0
 #define A0 (NN)
+
+
 
 {
   int deg_lambda, el, deg_omega;
@@ -124,7 +128,7 @@
 #if DEBUG >= 1
     /* Test code that verifies the erasure locator polynomial just constructed
        Needed only for decoder debugging. */
-    
+
     /* find roots of the erasure location polynomial */
     for(i=1;i<=no_eras;i++)
       reg[i] = INDEX_OF[lambda[i]];
@@ -159,7 +163,7 @@
   }
   for(i=0;i<NROOTS+1;i++)
     b[i] = INDEX_OF[lambda[i]];
-  
+
   /*
    * Begin Berlekamp-Massey algorithm to determine error+erasure
    * locator polynomial
@@ -226,7 +230,7 @@
     if (q != 0)
       continue; /* Not a root */
     /* store root (index-form) and error location number */
-#if DEBUG>=2
+#if (DEBUG >= 2)
     printf("count %d root %d loc %d\n",count,i,k);
 #endif
     root[count] = i;
@@ -271,7 +275,7 @@
     }
     num2 = ALPHA_TO[MODNN(root[j] * (FCR - 1) + NN)];
     den = 0;
-    
+
     /* lambda[i+1] for i even is the formal derivative lambda_pr of lambda[i] */
     for (i = MIN(deg_lambda,NROOTS-1) & ~1; i >= 0; i -=2) {
       if(lambda[i+1] != A0)

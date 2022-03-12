@@ -2,17 +2,17 @@
 // Copyright 2015, Oliver Jowett <oliver@mutability.co.uk>
 //
 
-// This file is free software: you may copy, redistribute and/or modify it  
+// This file is free software: you may copy, redistribute and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation, either version 2 of the License, or (at your  
-// option) any later version.  
+// Free Software Foundation, either version 2 of the License, or (at your
+// option) any later version.
 //
-// This file is distributed in the hope that it will be useful, but  
-// WITHOUT ANY WARRANTY; without even the implied warranty of  
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU  
+// This file is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License  
+// You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
@@ -160,11 +160,14 @@ void decode_nexrad(struct fisb_apdu *fisb) {
 	int block_num = (((fisb->data[0] & 0x0F) << 16) | (fisb->data[1] << 8) | (fisb->data[2]));
 	int scale_factor = ((fisb->data[0] & 0x30) >> 4);
 
-	// now decode the bins
+	/* now decode the bins */
 	if (rle_flag) {
-		// One bin, 128 values, RLE-encoded
+		/* One bin, 128 values, RLE-encoded */
 		int i;
-		double latN = 0, lonW = 0, latSize = 0, lonSize = 0;
+		double latN = 0;
+		double lonW = 0;
+		double latSize = 0;
+		double lonSize = 0;
 		block_location(block_num, ns_flag, scale_factor, &latN, &lonW, &latSize, &lonSize);
 
 		fprintf(stdout, "NEXRAD %s %02d:%02d %d %.0f %.0f %.0f %.0f ", fisb->product_id == 63 ? "Regional" : "CONUS", fisb->hours, fisb->minutes, scale_factor, latN * 60, lonW * 60, latSize * 60, lonSize * 60);
@@ -184,54 +187,51 @@ void decode_nexrad(struct fisb_apdu *fisb) {
 	} else {
 		int L = (fisb->data[3] & 15);
 		int i;
-		int row_start, row_offset, row_size;
+		int row_start;
+		int row_offset;
+		int row_size;
 
 		//
-		// Empty block representation, representing one
-		// or more blocks that are completely empty of
-		// data.
+		// Empty block representation, representing one or more blocks that are completely empty of data.
 		//
 		//       7    6    5    4    3    2    1    0
 		// 3   |b+4 |b+3 |b+2 |b+1 |    length (L)     |
 		// 4   |b+12|b+11|b+10|b+9 |b+8 |b+7 |b+6 |b+5 |
 		// ...
 		// 3+L |b+8L-3            ...            b+8L+4|
-
-		// The block number from the header is always
-		// empty.
 		//
-		// If the bit for b+x is empty, then the block
-		// X to the right of the block from the header is
-		// empty. Note that the block is _always on the
-		// same row_ even if the offset would make the
-		// block cross the 0E meridian, so it is not simply
-		// a case of adding to the block number.
-		
-		// find the lowest-numbered block of this row
+		// The block number from the header is always empty.
+		//
+		// If the bit for b+x is empty, then the block X to the right of the block from the header is empty. Note that
+		// the block is _always on the same row_ even if the offset would make the block cross the 0E meridian, so it is
+		// not simply a case of adding to the block number.
+		//
+
+		/* find the lowest-numbered block of this row */
 		if (block_num >= 405000) {
-		    row_start = block_num - ((block_num - 405000) % 225);
-		    row_size = 225;
+			row_start = block_num - ((block_num - 405000) % 225);
+			row_size = 225;
 		} else {
-		    row_start = block_num - (block_num % 450);
-		    row_size = 450;
+			row_start = block_num - (block_num % 450);
+			row_size = 450;
 		}
-		
-		// find the offset of the first block in this row handled
-		// by this message
+
+		/* find the offset of the first block in this row handled by this message */
 		row_offset = block_num - row_start;
 
 		for (i = 0; i < L; ++i) {
 			int bb;
 			int j;
 
-			if (i == 0)
-				bb = ((fisb->data[3] & 0xF0) | 0x08); // synthesize a first byte in the same format as all the other bytes
-			else
+			if (i == 0) {
+				bb = ((fisb->data[3] & 0xF0) | 0x08);	/* synthesize a first byte in the same format as all the other bytes */
+			} else {
 				bb = (fisb->data[i + 3]);
+			}
 
 			for (j = 0; j < 8; ++j) {
 				if (bb & (1 << j)) {
-					// find the relevant block for this bit, limited to the same row as the original block.
+					/* find the relevant block for this bit, limited to the same row as the original block. */
 					int row_x = (row_offset + 8*i + j - 3) % row_size;
 					int bn = row_start + row_x;
 					double latN = 0;
@@ -268,12 +268,14 @@ void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra) {
 		for (i = 0; i < mdb.num_info_frames; ++i) {
 			struct fisb_apdu *fisb;
 
-			if (!mdb.info_frames[i].is_fisb)
+			if (!mdb.info_frames[i].is_fisb) {
 				continue;
+			}
 
 			fisb = &mdb.info_frames[i].fisb;
-			if (fisb->product_id != 63 && fisb->product_id != 64)
+			if (fisb->product_id != 63 && fisb->product_id != 64) {
 				continue;
+			}
 
 			decode_nexrad(fisb);
 		}
@@ -281,6 +283,9 @@ void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra) {
 
 	fflush(stdout);
 }
+
+
+/* ================================================================================================================== */
 
 int main(int argc, char *argv[]) {
 	struct dump978_reader *reader;
@@ -301,4 +306,3 @@ int main(int argc, char *argv[]) {
 
 	return (0);
 }
-

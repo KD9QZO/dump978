@@ -5,11 +5,24 @@
 
 DEFINES += -DOUTPUT_HEX_UPPERCASE
 
-CFLAGS  += -pipe -std=gnu11 -O2 -g -Wall -Werror -Ifec
-LDFLAGS += -Wl,-Map=dump978.map -Wl,--cref -Wl,--relax
+STDLVL  := gnu11
+OPTLVL  := 2
+DBGLVL  := 2
+
+
+MAPFILE := dump978.map
+
+INCDIRS := -I./fec/
+
+CFLAGS  += -pipe -std=$(STDLVL) -O$(OPTLVL) -g$(DBGLVL) -Wall -Werror $(INCDIRS)
+LDFLAGS += -Wl,-Map=$(MAPFILE) -Wl,--cref -Wl,--relax
 LIBS    := -lm
+
+
 CC      := gcc
 CXX     := g++
+#CPP    := cpp
+
 
 
 all: dump978 uat2json uat2text uat2esnt extract_nexrad
@@ -48,4 +61,4 @@ test: fec_tests
 
 
 clean:
-	rm -f *~ *.o fec/*.o dump978 uat2json uat2text uat2esnt fec_tests
+	rm -f *~ *.o fec/*.o dump978 uat2json uat2text uat2esnt fec_tests extract_nexrad

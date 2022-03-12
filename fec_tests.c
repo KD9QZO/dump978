@@ -2,17 +2,17 @@
 // Copyright 2015, Oliver Jowett <oliver@mutability.co.uk>
 //
 
-// This file is free software: you may copy, redistribute and/or modify it  
+// This file is free software: you may copy, redistribute and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation, either version 2 of the License, or (at your  
-// option) any later version.  
+// Free Software Foundation, either version 2 of the License, or (at your
+// option) any later version.
 //
-// This file is distributed in the hope that it will be useful, but  
-// WITHOUT ANY WARRANTY; without even the implied warranty of  
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU  
+// This file is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License  
+// You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
@@ -28,15 +28,15 @@
 
 
 // Test data from DO-282B:
-//  Table 2-104 "ADS-B Message Reception - Set 1"
-//  Table 2-105 "ADS-B Message Reception - Set 2"
+//   Table 2-104 "ADS-B Message Reception - Set 1"
+//   Table 2-105 "ADS-B Message Reception - Set 2"
 struct {
 	const char *testname;
 	const char *input;
 	int frametype;
 	const char *expected;
 } downlink_tests[] = {
-	// Table 2-104
+	/* ---( Table 2-104 )--- */
 	{ "2-104 #1",  "FF8196782DD44238C1453855F89980C7524F5970940ED83AD89CE7A9BEF8761BBCD9FCC817D82E2D1ACF90CA78DA3C49", 1, "007E6987D2D74238C1453855F89980C7524F" },
 	{ "2-104 #2",  "007E6987D328BDC73EBA3955F89980C7524F5970940ED83AD89CE7A9BEF8BB7B190B2EA0EACC7237B7B01B036E07EE04", -1, NULL },
 	{ "2-104 #3",  "007E6987D2D74238C146C7AA07667FC7524F5970940ED83AD89CE7A9BEF8DBE78F0C386EB860D64E9BA9E06B95BEB66A", 1, "007E6987D2D74238C1453855F89980C7524F" },
@@ -84,7 +84,7 @@ struct {
 	{ "2-104 #45", "46D9B1EE2CE9216C8027CE5AE861E20BB742FF717C21B944DED0B164595D7181B14C131EA2DCCDD5B86D46824464BE9A", 2, "46D9B1EE2C16DE6C8027CE5AE89E1D0BB742FF717C21B9BB21D0B164595D7181B14C" },
 	{ "2-104 #46", "007F9667D2D74238C1453855076980C7524F5970940ED83AD89CE856BEF890867B135A1DB2EEC69474D7F594AC5738D8", -1, NULL },
 
-	// Table 2-105
+	/* ---( Table 2-105 )--- */
 	{ "2-105 #1",  "007E6987D2D74238C1453855F89980C7524F5970940ED83AD89CE7A9BEF890867B135A1DB2EEC69474D7F594AC5738D8", 1, "007E6987D2D74238C1453855F89980C7524F" },
 	{ "2-105 #2",  "A57355B54385ED2AD0929EB80DA044D556B452A7A73A5716CD1DB4096465BA105D9DAAD75342196DEBB63CC972994DEA", 2, "A57355B54385ED2AD0929EB80DA044D556B452A7A73A5716CD1DB40964F5BA105D9D" },
 	{ "2-105 #3",  "002818C07CC20D2BF6B961410BEE0C2FD5B9C934E4972EED17C8495075B290867B135A1DB2EEC69474D7F594AC5738D8", 1, "002818C07CC20D2BF6B961410BEE0C2FD5A4" },
@@ -138,38 +138,44 @@ struct {
 	{ "2-105 #51", "1F83699AD2D74238C1453855F89980C7524F5C70390ED83AD89CE7A9BEF8BA105D9D83DADD3FC8DC9842693A4E9D7E63", 2, "097E6987D2D74238C1453855F89980C7524F5970940ED83AD89CE7A9BEF8BA105D9D" },
 	{ "2-105 #52", "20884C02075C59B503CFC392E1A553E2B54F4009EAF8C20E0BFC64C93C52D0AA219E83E952864A5EE34E5C06B43ED58B", 2, "20884C02075C59B503CF0A92E1A553E2B54F40092EF8C2BD0BFC643D3C52D6AA219E" },
 
+	/* ---( END OF TABLE )--- */
 	{ NULL, NULL, -1, NULL }
 };
+
+
 
 static int hexbyte(const char *buf) {
 	int i;
 	char c;
 
 	c = buf[0];
-	if (c >= '0' && c <= '9')
+	if ((c >= '0') && (c <= '9')) {
 		i = (c - '0');
-	else if (c >= 'a' && c <= 'f')
+	} else if ((c >= 'a') && (c <= 'f')) {
 		i = (c - 'a' + 10);
-	else if (c >= 'A' && c <= 'F')
+	} else if ((c >= 'A') && (c <= 'F')) {
 		i = (c - 'A' + 10);
-	else
-		return -1;
+	} else {
+		return (-1);
+	}
 
 	i <<= 4;
 	c = buf[1];
-	if (c >= '0' && c <= '9')
-		return i | (c - '0');
-	else if (c >= 'a' && c <= 'f')
-		return i | (c - 'a' + 10);
-	else if (c >= 'A' && c <= 'F')
-		return i | (c - 'A' + 10);
-	else
-		return -1;
+	if ((c >= '0') && (c <= '9')) {
+		return (i | (c - '0'));
+	} else if ((c >= 'a') && (c <= 'f')) {
+		return (i | (c - 'a' + 10));
+	} else if ((c >= 'A') && (c <= 'F')) {
+		return (i | (c - 'A' + 10));
+	} else {
+		return (-1);
+	}
 }
 
 static void hex_to_bytes(const char *s, uint8_t *to) {
-	for (; *s; s += 2)
-		*to++ = (uint8_t) hexbyte(s);
+	for (; *s; s += 2) {
+		*to++ = (uint8_t)hexbyte(s);
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -200,12 +206,13 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		if (ok)
+		if (ok) {
 			fprintf(stderr, "PASS\n");
-		else
+		} else {
 			all_ok = 0;
+		}
 	}
 
-	return all_ok ? 0 : 1;
+	return (all_ok ? 0 : 1);
 }
 

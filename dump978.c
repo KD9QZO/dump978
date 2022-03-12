@@ -2,17 +2,17 @@
 // Copyright 2015, Oliver Jowett <oliver@mutability.co.uk>
 //
 
-// This file is free software: you may copy, redistribute and/or modify it  
+// This file is free software: you may copy, redistribute and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation, either version 2 of the License, or (at your  
-// option) any later version.  
+// Free Software Foundation, either version 2 of the License, or (at your
+// option) any later version.
 //
-// This file is distributed in the hope that it will be useful, but  
-// WITHOUT ANY WARRANTY; without even the implied warranty of  
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU  
+// This file is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License  
+// You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
@@ -196,12 +196,12 @@ static inline int sync_word_fuzzy_compare(uint64_t word, uint64_t expected) {
 	//
 	//    010101010101010000
 	//                 ^
-	// Subtracting one, will flip the 
+	// Subtracting one, will flip the
 	// bits starting at the last set bit:
 	//
 	//    010101010101001111
 	//                 ^
-	// then we can use that as a bitwise-and 
+	// then we can use that as a bitwise-and
 	// mask to clear the lowest set bit:
 	//
 	//    010101010101000000
@@ -323,20 +323,20 @@ int process_buffer(uint16_t *phi, int len, uint64_t offset) {
 	// ensure we don't consume any partial sync word we might be part-way
 	// through. This means we don't need to maintain state between calls.
 
-	lenbits = len/2 - (SYNC_BITS + UPLINK_FRAME_BITS);
+	lenbits = len / 2 - (SYNC_BITS + UPLINK_FRAME_BITS);
 	for (bit = 0; bit < lenbits; ++bit) {
-		int16_t dphi0 = phi_difference(phi[bit*2], phi[bit*2+1]);
-		int16_t dphi1 = phi_difference(phi[bit*2+1], phi[bit*2+2]);
+		int16_t dphi0 = phi_difference(phi[bit * 2], phi[bit * 2 + 1]);
+		int16_t dphi1 = phi_difference(phi[bit * 2 + 1], phi[bit * 2 + 2]);
 
-		sync0 = ((sync0 << 1) | (dphi0 > 0 ? 1 : 0)) & SYNC_MASK;
-		sync1 = ((sync1 << 1) | (dphi1 > 0 ? 1 : 0)) & SYNC_MASK;
+		sync0 = (((sync0 << 1) | (dphi0 > 0 ? 1 : 0)) & SYNC_MASK);
+		sync1 = (((sync1 << 1) | (dphi1 > 0 ? 1 : 0)) & SYNC_MASK);
 
 		if (bit < SYNC_BITS) {
 			continue; // haven't fully populated sync0/1 yet
 		}
 
 		// see if we have (the start of) a valid sync word
-		// It would be nice to look at popcount(expected ^ sync) 
+		// It would be nice to look at popcount(expected ^ sync)
 		// so we can tolerate some errors, but that turns out
 		// to be very expensive to do on every sample
 		//
@@ -356,11 +356,11 @@ int process_buffer(uint16_t *phi, int len, uint64_t offset) {
 
 			skip_0 = demod_adsb_frame(phi + index, demod_buf_a, &rs_0);
 			skip_1 = demod_adsb_frame(phi + index + 1, demod_buf_b, &rs_1);
-			if (skip_0 && rs_0 <= rs_1) {
+			if (skip_0 && (rs_0 <= rs_1)) {
 				handle_adsb_frame(offset + index, demod_buf_a, rs_0);
 				bit = startbit + skip_0;
 				continue;
-			} else if (skip_1 && rs_1 <= rs_0) {
+			} else if (skip_1 && (rs_1 <= rs_0)) {
 				handle_adsb_frame(offset + index + 1, demod_buf_b, rs_1);
 				bit = startbit + skip_1;
 				continue;
@@ -372,17 +372,19 @@ int process_buffer(uint16_t *phi, int len, uint64_t offset) {
 			int startbit = (bit - SYNC_BITS + 1);
 			int shift = (sync_word_fuzzy_compare(sync0, UPLINK_SYNC_WORD) ? 0 : 1);
 			int index = startbit * 2 + shift;
-			int skip_0, skip_1;
-			int rs_0 = -1, rs_1 = -1;
+			int skip_0;
+			int skip_1;
+			int rs_0 = -1;
+			int rs_1 = -1;
 
-			skip_0 = demod_uplink_frame(phi+index, demod_buf_a, &rs_0);
-			skip_1 = demod_uplink_frame(phi+index+1, demod_buf_b, &rs_1);
-			if (skip_0 && rs_0 <= rs_1) {
-				handle_uplink_frame(offset+index, demod_buf_a, rs_0);
+			skip_0 = demod_uplink_frame(phi + index, demod_buf_a, &rs_0);
+			skip_1 = demod_uplink_frame(phi + index + 1, demod_buf_b, &rs_1);
+			if (skip_0 && (rs_0 <= rs_1)) {
+				handle_uplink_frame(offset + index, demod_buf_a, rs_0);
 				bit = startbit + skip_0;
 				continue;
-			} else if (skip_1 && rs_1 <= rs_0) {
-				handle_uplink_frame(offset+index+1, demod_buf_b, rs_1);
+			} else if (skip_1 && (rs_1 <= rs_0)) {
+				handle_uplink_frame(offset + index + 1, demod_buf_b, rs_1);
 				bit = startbit + skip_1;
 				continue;
 			} else {
@@ -403,24 +405,31 @@ static void demod_frame(uint16_t *phi, uint8_t *frame, int bytes, int16_t center
 		if (phi_difference(phi[0], phi[1]) > center_dphi) {
 			b |= 0x80;
 		}
+
 		if (phi_difference(phi[2], phi[3]) > center_dphi) {
 			b |= 0x40;
 		}
+
 		if (phi_difference(phi[4], phi[5]) > center_dphi) {
 			b |= 0x20;
 		}
+
 		if (phi_difference(phi[6], phi[7]) > center_dphi) {
 			b |= 0x10;
 		}
+
 		if (phi_difference(phi[8], phi[9]) > center_dphi) {
 			b |= 0x08;
 		}
+
 		if (phi_difference(phi[10], phi[11]) > center_dphi) {
 			b |= 0x04;
 		}
+
 		if (phi_difference(phi[12], phi[13]) > center_dphi) {
 			b |= 0x02;
 		}
+
 		if (phi_difference(phi[14], phi[15]) > center_dphi) {
 			b |= 0x01;
 		}
@@ -442,17 +451,19 @@ static int demod_adsb_frame(uint16_t *phi, uint8_t *to, int *rs_errors) {
 
 	if (!check_sync_word(phi, ADSB_SYNC_WORD, &center_dphi)) {
 		*rs_errors = 9999;
-		return 0;
+
+		return (0);
 	}
 
-	demod_frame(phi + SYNC_BITS*2, to, LONG_FRAME_BYTES, center_dphi);    
+	demod_frame(phi + SYNC_BITS * 2, to, LONG_FRAME_BYTES, center_dphi);
 	frametype = correct_adsb_frame(to, rs_errors);
-	if (frametype == 1)
+	if (frametype == 1) {
 		return (SYNC_BITS + SHORT_FRAME_BITS);
-	else if (frametype == 2)
+	} else if (frametype == 2) {
 		return (SYNC_BITS + LONG_FRAME_BITS);
-	else
-		return 0;
+	} else {
+		return (0);
+	}
 }
 
 // Demodulate an uplink frame
@@ -467,15 +478,17 @@ static int demod_uplink_frame(uint16_t *phi, uint8_t *to, int *rs_errors) {
 
 	if (!check_sync_word(phi, UPLINK_SYNC_WORD, &center_dphi)) {
 		*rs_errors = 9999;
-		return 0;
+
+		return (0);
 	}
 
-	demod_frame(phi + SYNC_BITS*2, interleaved, UPLINK_FRAME_BYTES, center_dphi);
+	demod_frame(phi + SYNC_BITS * 2, interleaved, UPLINK_FRAME_BYTES, center_dphi);
 
 	// deinterleave and correct
-	if (correct_uplink_frame(interleaved, to, rs_errors) == 1)
-		return (UPLINK_FRAME_BITS+SYNC_BITS);
-	else
-		return 0;
+	if (correct_uplink_frame(interleaved, to, rs_errors) == 1) {
+		return (UPLINK_FRAME_BITS + SYNC_BITS);
+	} else {
+		return (0);
+	}
 }
 
