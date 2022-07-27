@@ -26,7 +26,6 @@
  * program.
  */
 
-
 #if !defined(NROOTS)
 #error "NROOTS not defined"
 #endif
@@ -73,52 +72,67 @@
 
 
 {
-  int deg_lambda, el, deg_omega;
-  int i, j, r,k;
-  data_t u,q,tmp,num1,num2,den,discr_r;
-  data_t lambda[NROOTS+1], s[NROOTS];	/* Err+Eras Locator poly
-					 * and syndrome poly */
-  data_t b[NROOTS+1], t[NROOTS+1], omega[NROOTS+1];
-  data_t root[NROOTS], reg[NROOTS+1], loc[NROOTS];
-  int syn_error, count;
+	int deg_lambda;
+	int el;
+	int deg_omega;
+	int i;
+	int j;
+	int r;
+	int k;
+	data_t u;
+	data_t q;
+	data_t tmp;
+	data_t num1;
+	data_t num2;
+	data_t den;
+	data_t discr_r;
+	data_t lambda[NROOTS + 1];
+	data_t s[NROOTS];			/* Err+Eras Locator poly and syndrome poly */
+	data_t b[NROOTS + 1];
+	data_t t[NROOTS + 1];
+	data_t omega[NROOTS + 1];
+	data_t root[NROOTS];
+	data_t reg[NROOTS + 1];
+	data_t loc[NROOTS];
+	int syn_error;
+	int count;
 
-  /* form the syndromes; i.e., evaluate data(x) at roots of g(x) */
-  for(i=0;i<NROOTS;i++)
-    s[i] = data[0];
+	/* form the syndromes; i.e., evaluate data(x) at roots of g(x) */
+	for (i = 0; i < NROOTS; i++) {
+		s[i] = data[0];
+	}
 
-  for(j=1;j<NN-PAD;j++){
-    for(i=0;i<NROOTS;i++){
-      if(s[i] == 0){
-	s[i] = data[j];
-      } else {
-	s[i] = data[j] ^ ALPHA_TO[MODNN(INDEX_OF[s[i]] + (FCR+i)*PRIM)];
-      }
-    }
-  }
+	for (j = 1; j < NN-PAD; j++) {
+		for (i = 0;i < NROOTS; i++) {
+			if (s[i] == 0) {
+				s[i] = data[j];
+			} else {
+				s[i] = data[j] ^ ALPHA_TO[MODNN(INDEX_OF[s[i]] + (FCR + i) * PRIM)];
+			}
+		}
+	}
 
-  /* Convert syndromes to index form, checking for nonzero condition */
-  syn_error = 0;
-  for(i=0;i<NROOTS;i++){
-    syn_error |= s[i];
-    s[i] = INDEX_OF[s[i]];
-  }
+	/* Convert syndromes to index form, checking for nonzero condition */
+	syn_error = 0;
+	for (i = 0; i < NROOTS; i++) {
+		syn_error |= s[i];
+		s[i] = INDEX_OF[s[i]];
+	}
 
-  if (!syn_error) {
-    /* if syndrome is zero, data[] is a codeword and there are no
-     * errors to correct. So return data[] unmodified
-     */
-    count = 0;
-    goto finish;
-  }
-  memset(&lambda[1],0,NROOTS*sizeof(lambda[0]));
-  lambda[0] = 1;
+	if (!syn_error) {
+		/* if syndrome is zero, data[] is a codeword and there are no  errors to correct. So return data[] unmodified */
+		count = 0;
+		goto finish;
+	}
+	memset(&lambda[1], 0, NROOTS * sizeof(lambda[0]));
+	lambda[0] = 1;
 
-  if (no_eras > 0) {
-    /* Init lambda to be the erasure locator polynomial */
-    lambda[1] = ALPHA_TO[MODNN(PRIM*(NN-1-eras_pos[0]))];
-    for (i = 1; i < no_eras; i++) {
-      u = MODNN(PRIM*(NN-1-eras_pos[i]));
-      for (j = i+1; j > 0; j--) {
+	if (no_eras > 0) {
+		/* Init lambda to be the erasure locator polynomial */
+		lambda[1] = ALPHA_TO[MODNN(PRIM * (NN - 1 - eras_pos[0]))];
+		for (i = 1; i < no_eras; i++) {
+			u = MODNN(PRIM*(NN-1-eras_pos[i]));
+			for (j = i+1; j > 0; j--) {
 	tmp = INDEX_OF[lambda[j - 1]];
 	if(tmp != A0)
 	  lambda[j] ^= ALPHA_TO[MODNN(u + tmp)];

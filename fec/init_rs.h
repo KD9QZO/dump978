@@ -3,7 +3,7 @@
  * May be used under the terms of the GNU Lesser General Public License (LGPL)
  */
 #undef NULL
-#define NULL ((void *)0)
+#define NULL ((void*)0)
 
 {
   int i, j, sr,root,iprim;

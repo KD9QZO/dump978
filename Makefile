@@ -1,27 +1,56 @@
 #
 # Makefile
 #
+# This is the Makefile for dump978 -- it will eventually be deprecated, and replaced with the much more flexible and
+# versatile CMake build system.
+#
 
 
-DEFINES += -DOUTPUT_HEX_UPPERCASE
-
-STDLVL  := gnu11
-OPTLVL  := 2
-DBGLVL  := 2
+PROJ := dump978
 
 
-MAPFILE := dump978.map
-
-INCDIRS := -I./fec/
-
-CFLAGS  += -pipe -std=$(STDLVL) -O$(OPTLVL) -g$(DBGLVL) -Wall -Werror $(INCDIRS)
-LDFLAGS += -Wl,-Map=$(MAPFILE) -Wl,--cref -Wl,--relax
-LIBS    := -lm
+DEFINES := -DOUTPUT_HEX_UPPERCASE
 
 
-CC      := gcc
-CXX     := g++
-#CPP    := cpp
+STDLVL := gnu11
+OPTLVL := 2
+DBGLVL := 2
+
+
+MAPFILE  := $(PROJ).map
+
+INCDIRS  := -I./fec/
+
+CFLAGS   += -pipe
+CFLAGS   += -std=$(STDLVL)
+CFLAGS   += -O$(OPTLVL)
+CFLAGS   += -g$(DBGLVL)
+CFLAGS   += $(DEFINES)
+CFLAGS   += -Wall -Werror
+CFLAGS   += $(INCDIRS)
+
+CPPFLAGS :=
+
+LDFLAGS  += -Wl,-Map=$(MAPFILE)
+LDFLAGS  += -Wl,--cref
+LDFLAGS  += -Wl,--relax
+
+LIBS     := -lm
+
+
+CROSS   :=
+
+CC      := $(CROSS)gcc
+CXX     := $(CROSS)g++
+#CPP    := $(CROSS)cpp
+#LD     := $(CROSS)ld
+#AS     := $(CROSS)as
+AR      := $(CROSS)ar
+NM      := $(CROSS)nm
+READELF := $(CROSS)readelf
+OBJCOPY := $(CROSS)objcopy
+OBJDUMP := $(CROSS)objdump
+SIZE    := $(CROSS)size
 
 
 

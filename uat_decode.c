@@ -85,82 +85,106 @@ static void uat_decode_sv(uint8_t *frame, struct uat_adsb_mdb *mdb) {
 	switch (mdb->airground_state) {
 		case AG_SUBSONIC:
 		case AG_SUPERSONIC: {
-			int raw_ns, raw_ew, raw_vvel;
+			int raw_ns;
+			int raw_ew;
+			int raw_vvel;
 
-			raw_ns = ((frame[12] & 0x1f) << 6) | ((frame[13] & 0xfc) >> 2);
-			if ((raw_ns & 0x3ff) != 0) {
+			raw_ns = (((frame[12] & 0x1F) << 6) | ((frame[13] & 0xFC) >> 2));
+			if ((raw_ns & 0x3FF) != 0) {
 				mdb->ns_vel_valid = 1;
-				mdb->ns_vel = ((raw_ns & 0x3ff) - 1);
-				if (raw_ns & 0x400)
+				mdb->ns_vel = ((raw_ns & 0x3FF) - 1);
+				if (raw_ns & 0x400) {
 					mdb->ns_vel = 0 - mdb->ns_vel;
-				if (mdb->airground_state == AG_SUPERSONIC)
+				}
+				if (mdb->airground_state == AG_SUPERSONIC) {
 					mdb->ns_vel *= 4;
+				}
 			}
 
-			raw_ew = ((frame[13] & 0x03) << 9) | (frame[14] << 1) | ((frame[15] & 0x80) >> 7);
-			if ((raw_ew & 0x3ff) != 0) {
+			raw_ew = (((frame[13] & 0x03) << 9) | (frame[14] << 1) | ((frame[15] & 0x80) >> 7));
+			if ((raw_ew & 0x3FF) != 0) {
 				mdb->ew_vel_valid = 1;
-				mdb->ew_vel = ((raw_ew & 0x3ff) - 1);
-				if (raw_ew & 0x400)
+				mdb->ew_vel = ((raw_ew & 0x3FF) - 1);
+				if (raw_ew & 0x400) {
 					mdb->ew_vel = 0 - mdb->ew_vel;
-				if (mdb->airground_state == AG_SUPERSONIC)
+				}
+				if (mdb->airground_state == AG_SUPERSONIC) {
 					mdb->ew_vel *= 4;
+				}
 			}
 
 			if (mdb->ns_vel_valid && mdb->ew_vel_valid) {
-				if (mdb->ns_vel != 0 || mdb->ew_vel != 0) {
+				if ((mdb->ns_vel != 0) || (mdb->ew_vel != 0)) {
 					mdb->track_type = TT_TRACK;
 					mdb->track = (uint16_t)(360 + 90 - atan2(mdb->ns_vel, mdb->ew_vel) * 180 / M_PI) % 360;
 				}
 
 				mdb->speed_valid = 1;
-				mdb->speed = (int) sqrt(mdb->ns_vel * mdb->ns_vel + mdb->ew_vel * mdb->ew_vel);
+				mdb->speed = (int)sqrt(mdb->ns_vel * mdb->ns_vel + mdb->ew_vel * mdb->ew_vel);
 			}
 
-			raw_vvel = ((frame[15] & 0x7f) << 4) | ((frame[16] & 0xf0) >> 4);
-			if ((raw_vvel & 0x1ff) != 0) {
+			raw_vvel = (((frame[15] & 0x7F) << 4) | ((frame[16] & 0xF0) >> 4));
+			if ((raw_vvel & 0x1FF) != 0) {
 				mdb->vert_rate_source = (raw_vvel & 0x400) ? ALT_BARO : ALT_GEO;
-				mdb->vert_rate = ((raw_vvel & 0x1ff) - 1) * 64;
-				if (raw_vvel & 0x200)
+				mdb->vert_rate = ((raw_vvel & 0x1FF) - 1) * 64;
+				if (raw_vvel & 0x200) {
 					mdb->vert_rate = 0 - mdb->vert_rate;
+				}
 			}
+
 			break;
 		}
 
 		case AG_GROUND: {
-			int raw_gs, raw_track;
+			int raw_gs;
+			int raw_track;
 
-		    raw_gs = ((frame[12] & 0x1f) << 6) | ((frame[13] & 0xfc) >> 2);
-		    if (raw_gs != 0) {
-		        mdb->speed_valid = 1;
-		        mdb->speed = ((raw_gs & 0x3ff) - 1);
-		    }
+			raw_gs = (((frame[12] & 0x1F) << 6) | ((frame[13] & 0xFC) >> 2));
+			if (raw_gs != 0) {
+				mdb->speed_valid = 1;
+				mdb->speed = ((raw_gs & 0x3FF) - 1);
+			}
 
-		    raw_track = ((frame[13] & 0x03) << 9) | (frame[14] << 1) | ((frame[15] & 0x80) >> 7);
-		    switch ((raw_track & 0x0600)>>9) {
-		    case 1: mdb->track_type = TT_TRACK; break;
-		    case 2: mdb->track_type = TT_MAG_HEADING; break;
-		    case 3: mdb->track_type = TT_TRUE_HEADING; break;
-		    }
+			raw_track = (((frame[13] & 0x03) << 9) | (frame[14] << 1) | ((frame[15] & 0x80) >> 7));
+			switch ((raw_track & 0x0600) >> 9) {
+				case 1:
+					mdb->track_type = TT_TRACK;
+					break;
 
-		    if (mdb->track_type != TT_INVALID)
-		        mdb->track = (raw_track & 0x1ff) * 360 / 512;
+				case 2:
+					mdb->track_type = TT_MAG_HEADING;
+					break;
 
-		    mdb->dimensions_valid = 1;
-		    mdb->length = 15 + 10 * ((frame[15] & 0x38) >> 3);
-		    mdb->width = dimensions_widths[(frame[15] & 0x78) >> 3];
-		    mdb->position_offset = (frame[15] & 0x04) ? 1 : 0;
+				case 3:
+					mdb->track_type = TT_TRUE_HEADING;
+					break;
+			}
+
+			if (mdb->track_type != TT_INVALID) {
+				mdb->track = (raw_track & 0x1FF) * 360 / 512;
+			}
+
+			mdb->dimensions_valid = 1;
+			mdb->length = 15 + 10 * ((frame[15] & 0x38) >> 3);
+			mdb->width = dimensions_widths[((frame[15] & 0x78) >> 3)];
+			mdb->position_offset = (frame[15] & 0x04) ? 1 : 0;
+
+			break;
 		}
-		break;
 
-	case AG_RESERVED:
-		// nothing
-		break;
+		case AG_RESERVED: {
+			/* nothing */
+			break;
+		}
+
+		default: {
+			break;
+		}
 	}
 
-	if ((frame[0] & 7) == 2 || (frame[0] & 7) == 3) {
+	if (((frame[0] & 7) == 2) || ((frame[0] & 7) == 3)) {
 		mdb->utc_coupled = 0;
-		mdb->tisb_site_id = (frame[16] & 0x0f);
+		mdb->tisb_site_id = (frame[16] & 0x0F);
 	} else {
 		mdb->utc_coupled = (frame[16] & 0x08) ? 1 : 0;
 		mdb->tisb_site_id = 0;
@@ -466,8 +490,8 @@ static void uat_decode_info_frame(struct uat_uplink_info_frame *frame) {
 
 	frame->is_fisb = 0;
 
-	if (frame->type != 0) {
-		return;		/* not FIS-B */
+	if (frame->type != 0) {		/* not FIS-B */
+		return;
 	}
 
 	if (frame->length < 4) {	/* too short for FIS-B */
@@ -577,13 +601,12 @@ void uat_decode_uplink_mdb(uint8_t *frame, struct uat_uplink_mdb *mdb) {
 			frame->length = ((data[0] << 1) | (data[1] >> 7));
 			frame->type = (data[1] & 0x0F);
 
-			if (data + frame->length + 2 > end) {
-				// overrun?
+			if (data + frame->length + 2 > end) {					/* overrun? */
 				break;
 			}
 
-			if (frame->length == 0 && frame->type == 0) {
-				break; // no more frames
+			if ((frame->length == 0) && (frame->type == 0)) {		/* no more frames... */
+				break;
 			}
 
 			frame->data = data + 2;
@@ -603,18 +626,20 @@ static void display_generic_data(uint8_t *data, uint16_t length, FILE *to) {
 	for (i = 0; i < length; i += 16) {
 		unsigned j;
 
-		if (i > 0)
+		if (i > 0) {
 			fprintf(to, "                    ");
-
-		for (j = i; j < i+16; ++j) {
-			if (j < length)
-				fprintf(to, "%02X ", data[j]);
-			else
-				fprintf(to, "   ");
 		}
 
-		for (j = i; j < i+16 && j < length; ++j) {
-			fprintf(to, "%c",  (data[j] >= 32 && data[j] < 127) ? data[j] : '.');
+		for (j = i; j < i+16; ++j) {
+			if (j < length) {
+				fprintf(to, "%02X ", data[j]);
+			} else {
+				fprintf(to, "   ");
+			}
+		}
+
+		for (j = i; (j < i + 16) && (j < length); ++j) {
+			fprintf(to, "%c", ((data[j] >= 32) && (data[j] < 127)) ? data[j] : '.');
 		}
 		fprintf(to, "\n");
 	}
@@ -622,7 +647,9 @@ static void display_generic_data(uint8_t *data, uint16_t length, FILE *to) {
 
 
 
-// The odd two-string-literals here is to avoid \0x3ABCDEF being interpreted as a single (very large valued) character
+/*
+ * The odd two-string-literals here is to avoid \0x3ABCDEF being interpreted as a single (very large valued) character
+ */
 static const char *dlac_alphabet = "\x03" "ABCDEFGHIJKLMNOPQRSTUVWXYZ\x1A\t\x1E\n| !\"#$%&'()*+,-./0123456789:;<=>?";
 
 
@@ -636,33 +663,37 @@ static const char *decode_dlac(uint8_t *data, unsigned bytelen) {
 	while (data < end) {
 		int ch;
 
-		assert(step >= 0 && step <= 3);
+		assert((step >= 0) && (step <= 3));
 		switch (step) {
 			case 0:
-				ch = data[0] >> 2;
+				ch = (data[0] >> 2);
 				++data;
 				break;
 
 			case 1:
-				ch = ((data[-1] & 0x03) << 4) | (data[0] >> 4);
+				ch = (((data[-1] & 0x03) << 4) | (data[0] >> 4));
 				++data;
 				break;
 
 			case 2:
-				ch = ((data[-1] & 0x0F) << 2) | (data[0] >> 6);
+				ch = (((data[-1] & 0x0F) << 2) | (data[0] >> 6));
 				break;
 
 			case 3:
-				ch = data[0] & 0x3F;
+				ch = (data[0] & 0x3F);
 				++data;
+				break;
+
+			default:
 				break;
 		}
 
 		if (tab) {
-			while (ch > 0)
+			while (ch > 0) {
 				*p++ = ' ', ch--;
+			}
 			tab = 0;
-		} else if (ch == 28) { // tab
+		} else if (ch == 28) {			/* tab */
 			tab = 1;
 		} else {
 			*p++ = dlac_alphabet[ch];
@@ -673,7 +704,7 @@ static const char *decode_dlac(uint8_t *data, unsigned bytelen) {
 
 	*p = 0;
 
-	return buf;
+	return (buf);
 }
 
 static const char *get_fisb_product_name(uint16_t product_id) {
@@ -941,15 +972,16 @@ static void uat_display_fisb_frame(const struct fisb_apdu *apdu, FILE *to) {
 	if (apdu->monthday_valid) {
 		fprintf(to, "%u/%u ", apdu->month, apdu->day);
 	}
+
 	fprintf(to, "%02u:%02u", apdu->hours, apdu->minutes);
 	if (apdu->seconds_valid) {
 		fprintf(to, ":%02u", apdu->seconds);
 	}
+
 	fprintf(to, "\n");
 
 	switch (apdu->product_id) {
-		case 413: {
-			// Generic text, DLAC
+		case 413: {																/* Generic text, DLAC */
 			const char *text = decode_dlac(apdu->data, apdu->length);
 			const char *report = text;
 
@@ -959,9 +991,9 @@ static void uat_display_fisb_frame(const struct fisb_apdu *apdu, FILE *to) {
 				char *p;
 				char *r;
 
-				next_report = strchr(report, '\x1e'); // RS
+				next_report = strchr(report, '\x1E');							// RS
 				if (!next_report) {
-					next_report = strchr(report, '\x03'); // ETX
+					next_report = strchr(report, '\x03');						// ETX
 				}
 
 				if (next_report) {
@@ -1031,7 +1063,13 @@ static const char *info_frame_type_names[16] = {
 };
 
 static void uat_display_uplink_info_frame(const struct uat_uplink_info_frame *frame, FILE *to) {
+#if 0
 	fprintf(to, "INFORMATION FRAME:\n Length:            %u bytes\n Type:              %u (%s)\n", frame->length, frame->type, info_frame_type_names[frame->type]);
+#else
+	fprintf(to, "INFORMATION FRAME:\n");
+	fprintf(to, " Length:            %u bytes\n", frame->length);
+	fprintf(to, " Type:              %u (%s)\n", frame->type, info_frame_type_names[frame->type]);
+#endif
 
 	if (frame->length > 0) {
 		if (frame->is_fisb)
@@ -1044,13 +1082,22 @@ static void uat_display_uplink_info_frame(const struct uat_uplink_info_frame *fr
 
 void uat_display_uplink_mdb(const struct uat_uplink_mdb *mdb, FILE *to) {
 	fprintf(to, "UPLINK:\n");
-
+#if 0
 	fprintf(to, " Site Latitude:     %+.4f%s\n Site Longitude:    %+.4f%s\n", mdb->lat, mdb->position_valid ? "" : " (possibly invalid)", mdb->lon, mdb->position_valid ? "" : " (possibly invalid)");
 
 	fprintf(to, " UTC coupled:       %s\n Slot ID:           %u\n TIS-B Site ID:     %u\n", mdb->utc_coupled ? "yes" : "no", mdb->slot_id, mdb->tisb_site_id);
+#else
+	fprintf(to, " Site Latitude:     %+.4f%s\n", mdb->lat, mdb->position_valid ? "" : " (possibly invalid)");
+	fprintf(to, " Site Longitude:    %+.4f%s\n", mdb->lon, mdb->position_valid ? "" : " (possibly invalid)");
+
+	fprintf(to, " UTC coupled:       %s\n", mdb->utc_coupled ? "yes" : "no");
+	fprintf(to, " Slot ID:           %u\n", mdb->slot_id);
+	fprintf(to, " TIS-B Site ID:     %u\n", mdb->tisb_site_id);
+#endif
 
 	if (mdb->app_data_valid) {
 		unsigned i;
+
 		for (i = 0; i < mdb->num_info_frames; ++i) {
 			uat_display_uplink_info_frame(&mdb->info_frames[i], to);
 		}

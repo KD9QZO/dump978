@@ -98,7 +98,7 @@ static void dump_raw_message(char updown, uint8_t *data, int len, int rs_errors)
 }
 
 static void handle_adsb_frame(uint64_t timestamp, uint8_t *frame, int rs) {
-	dump_raw_message('-', frame, (frame[0]>>3) == 0 ? SHORT_FRAME_DATA_BYTES : LONG_FRAME_DATA_BYTES, rs);
+	dump_raw_message('-', frame, (frame[0] >> 3) == 0 ? SHORT_FRAME_DATA_BYTES : LONG_FRAME_DATA_BYTES, rs);
 	fflush(stdout);
 }
 
@@ -121,9 +121,10 @@ void make_atan2_table() {
 
 	for (i = 0; i < 256; ++i) {
 		double d_i = (i - 127.5);
+
 		for (q = 0; q < 256; ++q) {
 			double d_q = (q - 127.5);
-			double ang = atan2(d_q, d_i) + M_PI; // atan2 returns [-pi..pi], normalize to [0..2*pi]
+			double ang = atan2(d_q, d_i) + M_PI;			/* atan2 returns [-pi..pi], normalize to [0..2*pi] */
 			double scaled_ang = round(32768 * ang / M_PI);
 
 			u.iq[0] = i;
@@ -174,15 +175,24 @@ void read_from_stdin() {
 	}
 }
 
-
-// Return 1 if word is "equal enough" to expected
+/**
+ * \brief Perform a "fuzzy" comparison of the sync word
+ *
+ * \param[in]	word		The \e actual sync word, as received
+ * \param[in]	expected	The \e expected sync word
+ *
+ * \return Indicates whether the sync word is <em>"equal enough"</em> to expected.
+ * \retval	0	The sync word had to many bit errors to be <em>"equal enough"</em> to the expected value
+ * \retval	1	The sync word is <em>"equal enough"</em> to expected
+ */
 static inline int sync_word_fuzzy_compare(uint64_t word, uint64_t expected) {
 	uint64_t diff;
 
-	if (word == expected)
-		return 1;
+	if (word == expected) {
+		return (1);
+	}
 
-	diff = word ^ expected; // guaranteed nonzero
+	diff = word ^ expected;	// guaranteed nonzero
 
 	// This is a bit-twiddling popcount
 	// hack, tweaked as we only care about
@@ -210,27 +220,31 @@ static inline int sync_word_fuzzy_compare(uint64_t word, uint64_t expected) {
 	// or we have seen too many set bits.
 
 	// >= 1 bit
-	diff &= (diff-1);   // clear lowest set bit
-	if (!diff)
-		return 1; // 1 bit error
+	diff &= (diff - 1);		// clear lowest set bit
+	if (!diff) {
+		return (1);			// 1 bit error
+	}
 
 	// >= 2 bits
-	diff &= (diff-1);   // clear lowest set bit
-	if (!diff)
-		return 1; // 2 bits error
+	diff &= (diff - 1);		// clear lowest set bit
+	if (!diff) {
+		return (1);			// 2 bits error
+	}
 
 	// >= 3 bits
-	diff &= (diff-1);   // clear lowest set bit
-	if (!diff)
-		return 1; // 3 bits error
+	diff &= (diff - 1);		// clear lowest set bit
+	if (!diff) {
+		return (1);			// 3 bits error
+	}
 
 	// >= 4 bits
-	diff &= (diff-1);   // clear lowest set bit
-	if (!diff)
-		return 1; // 4 bits error
+	diff &= (diff - 1);		// clear lowest set bit
+	if (!diff) {
+		return (1);			// 4 bits error
+	}
 
 	// > 4 bits in error, give up
-	return 0;
+	return (0);
 }
 
 

@@ -4,6 +4,9 @@
  * May be used under the terms of the GNU Lesser General Public License (LGPL)
  */
 
+#ifndef FEC_CHAR_H_
+#define FEC_CHAR_H_
+
 
 typedef unsigned char data_t;
 
@@ -21,3 +24,6 @@ typedef unsigned char data_t;
 #define IPRIM (rs->iprim)
 #define PAD (rs->pad)
 #define A0 (NN)
+
+
+#endif	/*! FEC_CHAR_H_ */

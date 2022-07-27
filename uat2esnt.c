@@ -578,39 +578,63 @@ static unsigned encodeSquawk(char *squawkStr) {
 	unsigned squawk = strtoul(squawkStr, NULL, 16);
 	unsigned encoded = 0;
 
-	if (squawk & 0x1000) encoded |= 0x0800; // A1
-	if (squawk & 0x2000) encoded |= 0x0200; // A2
-	if (squawk & 0x4000) encoded |= 0x0080; // A4
+	if (squawk & 0x1000) {		/* A1 */
+		encoded |= 0x0800;
+	}
+	if (squawk & 0x2000) {		/* A2 */
+		encoded |= 0x0200;
+	}
+	if (squawk & 0x4000) {		/* A4 */
+		encoded |= 0x0080;
+	}
 
-	if (squawk & 0x0100) encoded |= 0x0020; // B1
-	if (squawk & 0x0200) encoded |= 0x0008; // B2
-	if (squawk & 0x0400) encoded |= 0x0002; // B4
+	if (squawk & 0x0100) {		/* B1 */
+		encoded |= 0x0020;
+	}
+	if (squawk & 0x0200) {		/* B2 */
+		encoded |= 0x0008;
+	}
+	if (squawk & 0x0400) {		/* B4 */
+		encoded |= 0x0002;
+	}
 
-	if (squawk & 0x0010) encoded |= 0x1000; // C1
-	if (squawk & 0x0020) encoded |= 0x0400; // C2
-	if (squawk & 0x0040) encoded |= 0x0100; // C4
+	if (squawk & 0x0010) {		/* C1 */
+		encoded |= 0x1000;
+	}
+	if (squawk & 0x0020) {		/* C2 */
+		encoded |= 0x0400;
+	}
+	if (squawk & 0x0040) {		/* C4 */
+		encoded |= 0x0100;
+	}
 
-	if (squawk & 0x0001) encoded |= 0x0010; // D1
-	if (squawk & 0x0002) encoded |= 0x0004; // D2
-	if (squawk & 0x0004) encoded |= 0x0001; // D4
+	if (squawk & 0x0001) {		/* D1 */
+		encoded |= 0x0010;
+	}
+	if (squawk & 0x0002) {		/* D2 */
+		encoded |= 0x0004;
+	}
+	if (squawk & 0x0004) {		/* D4 */
+		encoded |= 0x0001;
+	}
 
 	return (encoded);
 }
 
 static int mapSquawkToEmergency(const char *squawkStr) {
-	if (!strcmp(squawkStr, "7500")) {
-		return (5);		/* Unlawful Interference */
+	if (!strcmp(squawkStr, "7500")) {		/* Unlawful Interference (ie: hijacking) */
+		return (5);
 	}
 
-	if (!strcmp(squawkStr, "7600")) {
-		return (4);		/* No Communications */
+	if (!strcmp(squawkStr, "7600")) {		/* No Communications (ie: loss of VHF radio) */
+		return (4);
 	}
 
-	if (!strcmp(squawkStr, "7700")) {
-		return (1);		/* General Emergency */
+	if (!strcmp(squawkStr, "7700")) {		/* General Emergency (ie: engine failure, low fuel, etc.) */
+		return (1);
 	}
 
-	return (0);			/* No Emergency */
+	return (0);								/* No Emergency */
 }
 
 static void maybe_send_callsign(struct uat_adsb_mdb *mdb) {
@@ -620,33 +644,33 @@ static void maybe_send_callsign(struct uat_adsb_mdb *mdb) {
 	switch (mdb->callsign_type) {
 		case CS_CALLSIGN:
 			if (imf) {
-				// Not sent with non-ICAO addresses
+				/* Not sent with non-ICAO addresses */
 				return;
 			}
 
-			setbits(esnt_frame, 1, 5, 18);            // DF=18, ES/NT
-			setbits(esnt_frame, 6, 8, encode_cf(mdb));// CF
-			setbits(esnt_frame, 9, 32, mdb->address); // AA
+			setbits(esnt_frame, 1, 5, 18);									// DF=18, ES/NT
+			setbits(esnt_frame, 6, 8, encode_cf(mdb));						// CF
+			setbits(esnt_frame, 9, 32, mdb->address);						// AA
 
 			if (mdb->emitter_category <= 7) {
-				setbits(esnt_frame + 4, 1, 5, 4);                         // FORMAT TYPE CODE = 4, aircraft category A
-				setbits(esnt_frame + 4, 6, 8, mdb->emitter_category & 7); // AIRCRAFT CATEGORY (A0 - A7)
+				setbits(esnt_frame + 4, 1, 5, 4);							// FORMAT TYPE CODE = 4, aircraft category A
+				setbits(esnt_frame + 4, 6, 8, mdb->emitter_category & 7);	// AIRCRAFT CATEGORY (A0 - A7)
 			} else if (mdb->emitter_category <= 15) {
-				setbits(esnt_frame + 4, 1, 5, 3);                         // FORMAT TYPE CODE = 3, aircraft category B
-				setbits(esnt_frame + 4, 6, 8, mdb->emitter_category & 7); // AIRCRAFT CATEGORY (B0 - B7)
+				setbits(esnt_frame + 4, 1, 5, 3);							// FORMAT TYPE CODE = 3, aircraft category B
+				setbits(esnt_frame + 4, 6, 8, mdb->emitter_category & 7);	// AIRCRAFT CATEGORY (B0 - B7)
 			} else if (mdb->emitter_category <= 23) {
-				setbits(esnt_frame + 4, 1, 5, 2);                         // FORMAT TYPE CODE = 2, aircraft category C
-				setbits(esnt_frame + 4, 6, 8, mdb->emitter_category & 7); // AIRCRAFT CATEGORY (C0 - C7)
+				setbits(esnt_frame + 4, 1, 5, 2);							// FORMAT TYPE CODE = 2, aircraft category C
+				setbits(esnt_frame + 4, 6, 8, mdb->emitter_category & 7);	// AIRCRAFT CATEGORY (C0 - C7)
 			} else if (mdb->emitter_category <= 31) {
-				setbits(esnt_frame + 4, 1, 5, 1);                         // FORMAT TYPE CODE = 1, aircraft category D
-				setbits(esnt_frame + 4, 6, 8, mdb->emitter_category & 7); // AIRCRAFT CATEGORY (D0 - D7)
+				setbits(esnt_frame + 4, 1, 5, 1);							// FORMAT TYPE CODE = 1, aircraft category D
+				setbits(esnt_frame + 4, 6, 8, mdb->emitter_category & 7);	// AIRCRAFT CATEGORY (D0 - D7)
 			} else {
-				// reserved, map to A0
-				setbits(esnt_frame + 4, 1, 5, 4);                         // FORMAT TYPE CODE = 4, aircraft category A
-				setbits(esnt_frame + 4, 6, 8, 0);                         // AIRCRAFT CATEGORY A0
+				/* reserved, map to A0 */
+				setbits(esnt_frame + 4, 1, 5, 4);							// FORMAT TYPE CODE = 4, aircraft category A
+				setbits(esnt_frame + 4, 6, 8, 0);							// AIRCRAFT CATEGORY A0
 			}
 
-			// Map callsign
+			/* Map callsign */
 			setbits(esnt_frame + 4, 9, 14, char_to_ais(mdb->callsign[0]));
 			setbits(esnt_frame + 4, 15, 20, char_to_ais(mdb->callsign[1]));
 			setbits(esnt_frame + 4, 21, 26, char_to_ais(mdb->callsign[2]));
@@ -659,15 +683,15 @@ static void maybe_send_callsign(struct uat_adsb_mdb *mdb) {
 			break;
 
 		case CS_SQUAWK:
-			setbits(esnt_frame, 1, 5, 18);            // DF=18, ES/NT
-			setbits(esnt_frame, 6, 8, encode_cf(mdb));// CF
-			setbits(esnt_frame, 9, 32, mdb->address); // AA
+			setbits(esnt_frame, 1, 5, 18);									// DF=18, ES/NT
+			setbits(esnt_frame, 6, 8, encode_cf(mdb));						// CF
+			setbits(esnt_frame, 9, 32, mdb->address);						// AA
 
-			setbits(esnt_frame + 4, 1, 5, 28);                           // FORMAT TYPE CODE = 28, Aircraft Status Message
-			setbits(esnt_frame + 4, 6, 8, 1);                            // subtype = 1, emergency/priority status
+			setbits(esnt_frame + 4, 1, 5, 28);								// FORMAT TYPE CODE = 28, Aircraft Status Message
+			setbits(esnt_frame + 4, 6, 8, 1);								// subtype = 1, emergency/priority status
 			setbits(esnt_frame + 4, 9, 11, mapSquawkToEmergency(mdb->callsign));
 			setbits(esnt_frame + 4, 12, 24, encodeSquawk(mdb->callsign));
-			// 25..55 reserved
+			/* 25..55 reserved */
 			setbits(esnt_frame + 4, 56, 56, imf);
 			checksum_and_send(esnt_frame, 14, 0);
 			break;
@@ -682,8 +706,10 @@ static void maybe_send_callsign(struct uat_adsb_mdb *mdb) {
 // Generator polynomial for the Mode S CRC:
 #define MODES_GENERATOR_POLY (0xFFF409U)
 
+
 // CRC values for all single-byte messages; used to speed up CRC calculation.
 static uint32_t crc_table[256];
+
 
 
 static void initCrcTables() {
@@ -729,6 +755,7 @@ static void checksum_and_send(uint8_t *frame, int len, uint32_t parity) {
 	for (j = 0; j < len; j++) {
 		fprintf(stdout, "%02X", frame[j]);
 	}
+
 	fprintf(stdout, ";\n");
 	fflush(stdout);
 }
@@ -740,16 +767,18 @@ static void generate_esnt(struct uat_adsb_mdb *mdb) {
 	maybe_send_callsign(mdb);
 }
 
+
 static int use_tisb = 1;
+
 
 static int should_send(struct uat_adsb_mdb *mdb) {
 	switch (mdb->address_qualifier) {
 		case AQ_ADSB_ICAO:
-			return (1); // Real UAT
+			return (1);			// Real UAT
 
 		case AQ_TISB_ICAO:
 		case AQ_TISB_OTHER:
-			return (use_tisb); // Only if TIS-B is enabled
+			return (use_tisb);	// Only if TIS-B is enabled
 
 		default:
 			return (1);
@@ -759,6 +788,7 @@ static int should_send(struct uat_adsb_mdb *mdb) {
 static void handle_frame(frame_type_t type, uint8_t *frame, int len, void *extra) {
 	if (type == UAT_DOWNLINK) {
 		struct uat_adsb_mdb mdb;
+
 		uat_decode_adsb_mdb(frame, &mdb);
 
 		if (should_send(&mdb)) {
@@ -779,7 +809,7 @@ static inline void usage(int argc, char *argv[]) {
 
 /* ================================================================================================================== */
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
 	struct dump978_reader *reader;
 	int framecount;
 	int opt;
