@@ -1,0 +1,39 @@
+#
+# .gitattributes
+#
+
+## GENERIC ##
+
+*				text=auto
+
+
+## SOURCE CODE ##
+
+*.c				eol=lf diff=cpp
+*.h				eol=lf diff=cpp
+
+
+## SCRIPTS ##
+
+Makefile		eol=lf
+*.sh			eol=lf
+*.fish			eol=lf
+*.mk			eol=lf
+*.make			eol=lf
+*.makefile		eol=lf
+CMakeLists.txt	eol=lf
+Doxyfile		eol=lf
+*.bat			eol=crlf
+*.cmd			eol=crlf
+*.ps1			eol=crlf
+*.py			eol=lf diff=python
+
+
+## TEXT & MARKUP ##
+
+*.txt			eol=crlf
+*.md			eol=crlf diff=markdown
+*.mkdn			eol=crlf diff=markdown
+*.markdown		eol=crlf diff=markdown
+*.rst			eol=lf
+*.adoc			eol=lf
